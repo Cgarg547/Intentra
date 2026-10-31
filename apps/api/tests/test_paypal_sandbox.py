@@ -74,6 +74,17 @@ async def test_paypal_order_creation_uses_idempotency():
             json={
                 "id": "MOCK-ORDER-123",
                 "status": "CREATED",
+                "purchase_units": [
+                    {
+                        "payee": {
+                            "merchant_id": "TEST_MERCHANT",
+                        },
+                        "amount": {
+                            "currency_code": "USD",
+                            "value": "40.00",
+                        }
+                    }
+                ],
             },
         )
 
@@ -84,6 +95,7 @@ async def test_paypal_order_creation_uses_idempotency():
             amount=Decimal("40.00"),
             currency="USD",
             provider_idempotency_key="intentra-test-123",
+            expected_paypal_merchant_id="TEST_MERCHANT",
         )
 
     assert order["id"] == "MOCK-ORDER-123"
@@ -130,6 +142,7 @@ async def test_paypal_rejects_invalid_amount():
                 amount=Decimal("-5.00"),
                 currency="USD",
                 provider_idempotency_key="invalid-test",
+                expected_paypal_merchant_id="TEST_MERCHANT",
             )
 
 
@@ -173,6 +186,7 @@ async def test_paypal_order_timeout_is_reported_as_uncertain():
                 amount=Decimal("40.00"),
                 currency="USD",
                 provider_idempotency_key="intentra-timeout-test",
+                expected_paypal_merchant_id="TEST_MERCHANT",
             )
 
 
@@ -201,6 +215,7 @@ async def test_paypal_invalid_order_response_is_rejected():
                 amount=Decimal("40.00"),
                 currency="USD",
                 provider_idempotency_key="intentra-invalid-response",
+                expected_paypal_merchant_id="TEST_MERCHANT",
             )
 
 
@@ -229,6 +244,7 @@ async def test_paypal_order_server_error_is_uncertain():
                 amount=Decimal("40.00"),
                 currency="USD",
                 provider_idempotency_key="intentra-server-error",
+                expected_paypal_merchant_id="TEST_MERCHANT",
             )
 
 
@@ -257,4 +273,130 @@ async def test_paypal_order_malformed_json_is_rejected():
                 amount=Decimal("40.00"),
                 currency="USD",
                 provider_idempotency_key="intentra-malformed-json",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+            )
+
+
+@pytest.mark.asyncio
+async def test_paypal_rejects_order_with_mismatched_amount():
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(
+                200,
+                json={"access_token": "mock-token"},
+            )
+
+        return httpx.Response(
+            201,
+            json={
+                "id": "MOCK-WRONG-AMOUNT",
+                "status": "CREATED",
+                "purchase_units": [
+                    {
+                        "payee": {"merchant_id": "TEST_MERCHANT"},
+                        "amount": {
+                            "currency_code": "USD",
+                            "value": "90.00",
+                        }
+                    }
+                ],
+            },
+        )
+
+    paypal, http = make_client(handler)
+
+    async with http:
+        with pytest.raises(
+            PayPalSandboxError,
+            match="amount mismatch",
+        ):
+            await paypal.create_order(
+                amount=Decimal("40.00"),
+                currency="USD",
+                provider_idempotency_key="intentra-amount-check",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+            )
+
+
+@pytest.mark.asyncio
+async def test_paypal_rejects_order_with_mismatched_currency():
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(
+                200,
+                json={"access_token": "mock-token"},
+            )
+
+        return httpx.Response(
+            201,
+            json={
+                "id": "MOCK-WRONG-CURRENCY",
+                "status": "CREATED",
+                "purchase_units": [
+                    {
+                        "payee": {"merchant_id": "TEST_MERCHANT"},
+                        "amount": {
+                            "currency_code": "CAD",
+                            "value": "40.00",
+                        }
+                    }
+                ],
+            },
+        )
+
+    paypal, http = make_client(handler)
+
+    async with http:
+        with pytest.raises(
+            PayPalSandboxError,
+            match="currency mismatch",
+        ):
+            await paypal.create_order(
+                amount=Decimal("40.00"),
+                currency="USD",
+                provider_idempotency_key="intentra-currency-check",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+            )
+
+
+@pytest.mark.asyncio
+async def test_paypal_rejects_order_with_mismatched_merchant():
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(
+                200,
+                json={"access_token": "mock-token"},
+            )
+
+        return httpx.Response(
+            201,
+            json={
+                "id": "MOCK-WRONG-MERCHANT",
+                "status": "CREATED",
+                "purchase_units": [
+                    {
+                        "payee": {
+                            "merchant_id": "UNEXPECTED_MERCHANT",
+                        },
+                        "amount": {
+                            "currency_code": "USD",
+                            "value": "40.00",
+                        },
+                    }
+                ],
+            },
+        )
+
+    paypal, http = make_client(handler)
+
+    async with http:
+        with pytest.raises(
+            PayPalSandboxError,
+            match="merchant mismatch",
+        ):
+            await paypal.create_order(
+                amount=Decimal("40.00"),
+                currency="USD",
+                provider_idempotency_key="intentra-merchant-check",
+                expected_paypal_merchant_id="EXPECTED_MERCHANT",
             )
