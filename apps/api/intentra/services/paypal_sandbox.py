@@ -19,6 +19,70 @@ class PayPalSandboxConfig:
     client_secret: str
 
 
+def validate_paypal_order(
+    data: dict,
+    *,
+    order_id: str | None,
+    expected_paypal_merchant_id: str,
+    amount: Decimal,
+    currency: str,
+) -> None:
+    """Verify the identity and authorized payment details of an order."""
+    if (
+        not isinstance(data, dict)
+        or not isinstance(data.get("id"), str)
+        or not data["id"].strip()
+        or (order_id is not None and data["id"] != order_id)
+    ):
+        raise PayPalSandboxError("PayPal returned an invalid order.")
+
+    purchase_units = data.get("purchase_units")
+
+    if (
+        not isinstance(purchase_units, list)
+        or len(purchase_units) != 1
+        or not isinstance(purchase_units[0], dict)
+    ):
+        raise PayPalSandboxError(
+            "PayPal returned an invalid purchase unit."
+        )
+
+    payee = purchase_units[0].get("payee")
+
+    if (
+        not isinstance(payee, dict)
+        or payee.get("merchant_id") != expected_paypal_merchant_id
+    ):
+        raise PayPalSandboxError("PayPal order merchant mismatch.")
+
+    order_amount = purchase_units[0].get("amount")
+
+    if not isinstance(order_amount, dict):
+        raise PayPalSandboxError(
+            "PayPal returned an invalid order amount."
+        )
+
+    if order_amount.get("currency_code") != currency:
+        raise PayPalSandboxError("PayPal order currency mismatch.")
+
+    raw_value = order_amount.get("value")
+
+    if not isinstance(raw_value, str):
+        raise PayPalSandboxError(
+            "PayPal returned an invalid order amount."
+        )
+
+    try:
+        actual_amount = Decimal(raw_value)
+    except Exception as exc:
+        raise PayPalSandboxError(
+            "PayPal returned an invalid order amount."
+        ) from exc
+
+    if not actual_amount.is_finite() or actual_amount != amount:
+        raise PayPalSandboxError("PayPal order amount mismatch.")
+
+
 class PayPalSandboxClient:
     def __init__(
         self,
@@ -141,94 +205,97 @@ class PayPalSandboxClient:
                 "Reconcile using the original idempotency key."
             ) from exc
 
-        if (
-            not isinstance(data, dict)
-            or not isinstance(data.get("id"), str)
-            or not data["id"].strip()
-        ):
-            raise PayPalSandboxError(
-                "PayPal returned an invalid order."
-            )
-
-        purchase_units = data.get("purchase_units")
-
-        if (
-            not isinstance(purchase_units, list)
-            or len(purchase_units) != 1
-            or not isinstance(purchase_units[0], dict)
-        ):
-            raise PayPalSandboxError(
-                "PayPal returned an invalid purchase unit."
-            )
-
-        payee = purchase_units[0].get("payee")
-
-        if (
-            not isinstance(payee, dict)
-            or payee.get("merchant_id") != expected_paypal_merchant_id
-        ):
-            raise PayPalSandboxError(
-                "PayPal order merchant mismatch."
-            )
-
-        order_amount = purchase_units[0].get("amount")
-
-        if not isinstance(order_amount, dict):
-            raise PayPalSandboxError(
-                "PayPal returned an invalid order amount."
-            )
-
-        if order_amount.get("currency_code") != currency:
-            raise PayPalSandboxError(
-                "PayPal order currency mismatch."
-            )
-
-        raw_value = order_amount.get("value")
-
-        if not isinstance(raw_value, str):
-            raise PayPalSandboxError(
-                "PayPal returned an invalid order amount."
-            )
-
-        try:
-            actual_amount = Decimal(raw_value)
-        except Exception as exc:
-            raise PayPalSandboxError(
-                "PayPal returned an invalid order amount."
-            ) from exc
-
-        if (
-            not actual_amount.is_finite()
-            or actual_amount != amount
-        ):
-            raise PayPalSandboxError(
-                "PayPal order amount mismatch."
-            )
+        validate_paypal_order(
+            data,
+            order_id=None,
+            expected_paypal_merchant_id=expected_paypal_merchant_id,
+            amount=amount,
+            currency=currency,
+        )
 
         return data
 
-    async def get_order(self, *, order_id: str) -> dict:
-        if not order_id:
-            raise PayPalSandboxError("Missing PayPal order ID.")
+    async def get_order(
+        self,
+        *,
+        order_id: str,
+        expected_paypal_merchant_id: str,
+        amount: Decimal,
+        currency: str,
+    ) -> dict:
+        """
+        Retrieve and verify an existing PayPal order.
+
+        Does not create an order, capture payment, or
+        establish that a payment was completed.
+        """
+        if (
+            not isinstance(order_id, str)
+            or not order_id.strip()
+            or order_id != order_id.strip()
+            or len(order_id) > 128
+            or "/" in order_id
+            or "?" in order_id
+            or "#" in order_id
+        ):
+            raise PayPalSandboxError("Invalid PayPal order ID.")
+
+        if (
+            not isinstance(expected_paypal_merchant_id, str)
+            or not expected_paypal_merchant_id.strip()
+        ):
+            raise PayPalSandboxError(
+                "Missing verified PayPal merchant ID."
+            )
+
+        if (
+            not isinstance(amount, Decimal)
+            or not amount.is_finite()
+            or amount <= 0
+        ):
+            raise PayPalSandboxError("Invalid expected payment amount.")
+
+        if (
+            not isinstance(currency, str)
+            or len(currency) != 3
+            or not currency.isalpha()
+            or not currency.isupper()
+        ):
+            raise PayPalSandboxError("Invalid expected currency.")
 
         token = await self.get_access_token()
 
-        response = await self.http.get(
-            f"{SANDBOX_BASE_URL}/v2/checkout/orders/{order_id}",
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=PAYPAL_HTTP_TIMEOUT,
-        )
+        try:
+            response = await self.http.get(
+                f"{SANDBOX_BASE_URL}/v2/checkout/orders/{order_id}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=PAYPAL_HTTP_TIMEOUT,
+            )
+        except httpx.RequestError as exc:
+            raise PayPalSandboxError(
+                "PayPal order lookup failed; payment state remains unknown."
+            ) from exc
 
         if response.status_code != 200:
             raise PayPalSandboxError(
-                f"PayPal order lookup returned HTTP {response.status_code}"
+                "PayPal order lookup failed; "
+                f"provider returned HTTP {response.status_code}. "
+                "Payment state remains unknown."
             )
 
-        data = response.json()
-
-        if not isinstance(data, dict) or data.get("id") != order_id:
+        try:
+            data = response.json()
+        except ValueError as exc:
             raise PayPalSandboxError(
-                "PayPal returned an unexpected order."
-            )
+                "PayPal returned an unreadable order response."
+            ) from exc
+
+        validate_paypal_order(
+            data,
+            order_id=order_id,
+            expected_paypal_merchant_id=expected_paypal_merchant_id,
+            amount=amount,
+            currency=currency,
+        )
 
         return data

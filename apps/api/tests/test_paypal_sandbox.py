@@ -117,16 +117,31 @@ async def test_paypal_order_lookup():
             200,
             json={
                 "id": "MOCK-123",
-                "status": "COMPLETED",
+                "status": "CREATED",
+                "purchase_units": [
+                    {
+                        "payee": {"merchant_id": "TEST_MERCHANT"},
+                        "amount": {
+                            "currency_code": "USD",
+                            "value": "40.00",
+                        },
+                    }
+                ],
             },
         )
 
     paypal, http = make_client(handler)
 
     async with http:
-        order = await paypal.get_order(order_id="MOCK-123")
+        order = await paypal.get_order(
+            order_id="MOCK-123",
+            expected_paypal_merchant_id="TEST_MERCHANT",
+            amount=Decimal("40.00"),
+            currency="USD",
+        )
 
-    assert order["status"] == "COMPLETED"
+    assert order["id"] == "MOCK-123"
+    assert order["status"] == "CREATED"
 
 
 @pytest.mark.asyncio
@@ -399,4 +414,119 @@ async def test_paypal_rejects_order_with_mismatched_merchant():
                 currency="USD",
                 provider_idempotency_key="intentra-merchant-check",
                 expected_paypal_merchant_id="EXPECTED_MERCHANT",
+            )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "merchant,amount,currency",
+    [
+        ("WRONG_MERCHANT", "40.00", "USD"),
+        ("TEST_MERCHANT", "90.00", "USD"),
+        ("TEST_MERCHANT", "40.00", "CAD"),
+    ],
+)
+async def test_paypal_lookup_rejects_mismatched_order(
+    merchant,
+    amount,
+    currency,
+):
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(
+                200,
+                json={"access_token": "mock-token"},
+            )
+
+        return httpx.Response(
+            200,
+            json={
+                "id": "MOCK-LOOKUP-123",
+                "status": "CREATED",
+                "purchase_units": [
+                    {
+                        "payee": {"merchant_id": merchant},
+                        "amount": {
+                            "currency_code": currency,
+                            "value": amount,
+                        },
+                    }
+                ],
+            },
+        )
+
+    paypal, http = make_client(handler)
+
+    async with http:
+        with pytest.raises(PayPalSandboxError):
+            await paypal.get_order(
+                order_id="MOCK-LOOKUP-123",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+                amount=Decimal("40.00"),
+                currency="USD",
+            )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"id": "WRONG-ORDER"},
+        {"id": "MOCK-LOOKUP-123", "purchase_units": []},
+        {
+            "id": "MOCK-LOOKUP-123",
+            "purchase_units": [
+                {
+                    "payee": {"merchant_id": "TEST_MERCHANT"},
+                    "amount": {
+                        "currency_code": "USD",
+                        "value": "not-a-number",
+                    },
+                }
+            ],
+        },
+    ],
+)
+async def test_paypal_lookup_rejects_malformed_order(payload):
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(
+                200,
+                json={"access_token": "mock-token"},
+            )
+
+        return httpx.Response(200, json=payload)
+
+    paypal, http = make_client(handler)
+
+    async with http:
+        with pytest.raises(PayPalSandboxError):
+            await paypal.get_order(
+                order_id="MOCK-LOOKUP-123",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+                amount=Decimal("40.00"),
+                currency="USD",
+            )
+
+
+@pytest.mark.asyncio
+async def test_paypal_lookup_timeout_is_not_payment_failure():
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(
+                200,
+                json={"access_token": "mock-token"},
+            )
+
+        raise httpx.ReadTimeout("Simulated lookup timeout")
+
+    paypal, http = make_client(handler)
+
+    async with http:
+        with pytest.raises(PayPalSandboxError):
+            await paypal.get_order(
+                order_id="MOCK-LOOKUP-123",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+                amount=Decimal("40.00"),
+                currency="USD",
             )
