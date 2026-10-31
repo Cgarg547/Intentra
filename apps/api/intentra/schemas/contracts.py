@@ -34,3 +34,11 @@ class ContractResponse(BaseModel):
     approved_at: datetime | None
     approved_by: uuid.UUID | None
     revoked_at: datetime | None
+
+
+class ContractApprovalRequest(BaseModel):
+    expected_version: int = Field(ge=1)
+
+
+class ContractRevocationRequest(BaseModel):
+    expected_version: int = Field(ge=1)

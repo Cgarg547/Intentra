@@ -1,3 +1,5 @@
+from intentra.routes.payments import router as payments_router
+from intentra.routes.contracts import router as contracts_router
 from intentra.middleware.origin import OriginProtectionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,7 +21,8 @@ app.add_middleware(
 )
 app.add_middleware(OriginProtectionMiddleware)
 app.include_router(auth_router)
-
+app.include_router(contracts_router)
+app.include_router(payments_router)
 
 @app.get("/health")
 def health():
