@@ -5,6 +5,7 @@ from intentra.models.intent_contract import Base
 from intentra.models.session import SessionRecord  # noqa: F401
 from intentra.models.payment_evaluation import PaymentEvaluationRecord  # noqa: F401
 from intentra.models.payment_reservation import PaymentReservationRecord  # noqa: F401
+from intentra.models.payment_attempt import PaymentAttemptRecord  # noqa: F401
 from logging.config import fileConfig
 
 
