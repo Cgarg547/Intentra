@@ -132,12 +132,13 @@ async def test_repeated_order_binding_is_idempotent():
 @pytest.mark.asyncio
 async def test_conflicting_order_binding_is_rejected():
     attempt_id = await create_claimed_attempt()
+    suffix = uuid.uuid4().hex
 
     async with SessionLocal() as db:
         await bind_provider_order(
             db,
             attempt_id=attempt_id,
-            provider_order_id="MOCK-ORIGINAL",
+            provider_order_id=f"MOCK-ORIGINAL-{suffix}",
         )
 
     async with SessionLocal() as db:
@@ -148,13 +149,14 @@ async def test_conflicting_order_binding_is_rejected():
             await bind_provider_order(
                 db,
                 attempt_id=attempt_id,
-                provider_order_id="MOCK-DIFFERENT",
+                provider_order_id=f"MOCK-DIFFERENT-{suffix}",
             )
 
 
 @pytest.mark.asyncio
 async def test_concurrent_order_binding_has_one_winner():
     attempt_id = await create_claimed_attempt()
+    suffix = uuid.uuid4().hex
 
     async def bind(order_id):
         async with SessionLocal() as db:
@@ -168,8 +170,8 @@ async def test_concurrent_order_binding_has_one_winner():
                 return exc
 
     results = await asyncio.gather(
-        bind("MOCK-WORKER-A"),
-        bind("MOCK-WORKER-B"),
+        bind(f"MOCK-WORKER-A-{suffix}"),
+        bind(f"MOCK-WORKER-B-{suffix}"),
     )
 
     winners = [
@@ -194,3 +196,40 @@ async def test_concurrent_order_binding_has_one_winner():
 
     assert saved is not None
     assert saved.provider_order_id == winners[0].provider_order_id
+
+
+@pytest.mark.asyncio
+async def test_same_provider_order_cannot_bind_to_two_attempts():
+    first_attempt_id = await create_claimed_attempt()
+    second_attempt_id = await create_claimed_attempt()
+    shared_order_id = f"MOCK-SHARED-{uuid.uuid4().hex}"
+
+    async with SessionLocal() as db:
+        first = await bind_provider_order(
+            db,
+            attempt_id=first_attempt_id,
+            provider_order_id=shared_order_id,
+        )
+
+    assert first.changed is True
+
+    async with SessionLocal() as db:
+        with pytest.raises(
+            PaymentOrderBindingError,
+            match="Provider order ID is already bound",
+        ):
+            await bind_provider_order(
+                db,
+                attempt_id=second_attempt_id,
+                provider_order_id=shared_order_id,
+            )
+
+    async with SessionLocal() as db:
+        second = await db.scalar(
+            select(PaymentAttemptRecord).where(
+                PaymentAttemptRecord.id == second_attempt_id
+            )
+        )
+
+    assert second is not None
+    assert second.provider_order_id is None

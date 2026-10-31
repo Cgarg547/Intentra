@@ -26,6 +26,10 @@ class PaymentAttemptRecord(Base):
             "provider_idempotency_key",
             name="uq_payment_attempt_provider_key",
         ),
+        UniqueConstraint(
+            "provider_order_id",
+            name="uq_payment_attempt_provider_order",
+        ),
         CheckConstraint(
             "status IN ('PENDING', 'SUCCEEDED', 'FAILED', 'UNKNOWN')",
             name="ck_payment_attempt_status",

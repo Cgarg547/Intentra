@@ -2,6 +2,7 @@ import uuid
 from dataclasses import dataclass
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from intentra.models.intent_contract import IntentContractRecord
@@ -114,7 +115,50 @@ async def bind_provider_order(
 
     attempt.provider_order_id = provider_order_id
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+
+        # PostgreSQL SQLSTATE 23505 indicates a unique violation.
+        # Translate only our provider-order constraint.
+        original = exc.orig
+        sqlstate = getattr(original, "sqlstate", None)
+        if sqlstate is None:
+            sqlstate = getattr(
+                getattr(original, "__cause__", None),
+                "sqlstate",
+                None,
+            )
+
+        constraint_name = getattr(
+            original,
+            "constraint_name",
+            None,
+        )
+        if constraint_name is None:
+            constraint_name = getattr(
+                getattr(original, "__cause__", None),
+                "constraint_name",
+                None,
+            )
+
+        if (
+            sqlstate == "23505"
+            and (
+                constraint_name == "uq_payment_attempt_provider_order"
+                or (
+                    constraint_name is None
+                    and "uq_payment_attempt_provider_order"
+                    in str(original)
+                )
+            )
+        ):
+            raise PaymentOrderBindingError(
+                "Provider order ID is already bound."
+            ) from exc
+
+        raise
 
     return PaymentOrderBinding(
         attempt_id=attempt.id,
