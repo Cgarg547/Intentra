@@ -174,7 +174,14 @@ async def reserve_payment(
         select(func.coalesce(func.sum(PaymentReservationRecord.amount), 0))
         .where(
             PaymentReservationRecord.contract_id == contract.id,
-            PaymentReservationRecord.status == "RESERVED",
+            PaymentReservationRecord.status.in_(
+                (
+                    "RESERVED",
+                    "EXECUTION_PENDING",
+                    "OUTCOME_UNKNOWN",
+                    "CAPTURED",
+                )
+            ),
         )
     )
     remaining = contract.maximum_amount - spent

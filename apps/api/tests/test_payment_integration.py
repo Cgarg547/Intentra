@@ -742,3 +742,121 @@ async def test_concurrent_revocation_and_reservation():
             assert total == Decimal("0.00")
         else:
             assert total == Decimal("60.00")
+
+
+@pytest.mark.asyncio
+async def test_execution_states_preserve_budget_accounting():
+    from decimal import Decimal
+
+    from sqlalchemy import func, select, update
+
+    from intentra.database import SessionLocal
+    from intentra.models.payment_reservation import PaymentReservationRecord
+
+    suffix = uuid.uuid4().hex
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://localhost:3000",
+        headers={"Origin": "http://localhost:3000"},
+    ) as client:
+        response = await client.post(
+            "/api/auth/register",
+            json={
+                "email": f"budget-states-{suffix}@example.com",
+                "password": "IntentraIntegrationTest2026!",
+            },
+        )
+        assert response.status_code == 201, response.text
+
+        response = await client.post(
+            "/api/contracts",
+            json={
+                "merchant_id": "budget_states_merchant",
+                "maximum_amount": "100.00",
+                "currency": "USD",
+            },
+        )
+        assert response.status_code == 201, response.text
+        contract_id = response.json()["id"]
+
+        response = await client.post(
+            f"/api/contracts/{contract_id}/approve",
+            json={"expected_version": 1},
+        )
+        assert response.status_code == 200, response.text
+
+        async def reserve(key, amount):
+            return await client.post(
+                "/api/payments/reserve",
+                json={
+                    "contract_id": contract_id,
+                    "idempotency_key": key,
+                    "merchant_id": "budget_states_merchant",
+                    "amount": amount,
+                    "currency": "USD",
+                },
+            )
+
+        cases = [
+            ("captured", "40.00", "CAPTURED"),
+            ("unknown", "30.00", "OUTCOME_UNKNOWN"),
+            ("pending", "20.00", "EXECUTION_PENDING"),
+            ("cancelled", "10.00", "CANCELLED"),
+        ]
+
+        for key, amount, target_status in cases:
+            response = await reserve(key, amount)
+            assert response.status_code == 200, response.text
+            assert response.json()["status"] == "RESERVED"
+
+            # Test-only direct database transition.
+            # No public endpoint may perform this operation.
+            async with SessionLocal() as db:
+                result = await db.execute(
+                    update(PaymentReservationRecord)
+                    .where(
+                        PaymentReservationRecord.id
+                        == uuid.UUID(response.json()["reservation_id"]),
+                        PaymentReservationRecord.status == "RESERVED",
+                    )
+                    .values(status=target_status)
+                )
+                assert result.rowcount == 1
+                await db.commit()
+
+        # 40 captured + 30 unknown + 20 pending = 90 consumed.
+        # The cancelled 10 must not count.
+        blocked = await reserve("too-large", "20.00")
+        assert blocked.status_code == 200, blocked.text
+        assert blocked.json()["status"] == "BLOCKED"
+        assert blocked.json()["remaining_amount"] == "10.00"
+
+        allowed = await reserve("remaining-budget", "10.00")
+        assert allowed.status_code == 200, allowed.text
+        assert allowed.json()["status"] == "RESERVED"
+        assert allowed.json()["remaining_amount"] == "0.00"
+
+    async with SessionLocal() as db:
+        consumed = await db.scalar(
+            select(
+                func.coalesce(
+                    func.sum(PaymentReservationRecord.amount),
+                    0,
+                )
+            ).where(
+                PaymentReservationRecord.contract_id
+                == uuid.UUID(contract_id),
+                PaymentReservationRecord.status.in_(
+                    (
+                        "RESERVED",
+                        "EXECUTION_PENDING",
+                        "OUTCOME_UNKNOWN",
+                        "CAPTURED",
+                    )
+                ),
+            )
+        )
+
+        assert consumed == Decimal("100.00")

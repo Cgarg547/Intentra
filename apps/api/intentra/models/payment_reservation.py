@@ -35,7 +35,16 @@ class PaymentReservationRecord(Base):
             name="ck_reservation_positive_version",
         ),
         CheckConstraint(
-            "status IN ('RESERVED', 'BLOCKED')",
+            (
+                "status IN ("
+                "'RESERVED', "
+                "'EXECUTION_PENDING', "
+                "'OUTCOME_UNKNOWN', "
+                "'CAPTURED', "
+                "'CANCELLED', "
+                "'BLOCKED'"
+                ")"
+            ),
             name="ck_reservation_status",
         ),
     )
@@ -82,7 +91,7 @@ class PaymentReservationRecord(Base):
     )
 
     status: Mapped[str] = mapped_column(
-        String(16),
+        String(32),
         nullable=False,
     )
 
