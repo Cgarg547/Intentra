@@ -2,6 +2,7 @@ import asyncio
 
 from intentra.database import get_database_url
 from intentra.models.intent_contract import Base
+from intentra.models.session import SessionRecord  # noqa: F401
 from logging.config import fileConfig
 
 
