@@ -94,3 +94,23 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Authorization chart palette */
+:root,
+[data-theme="light"] {
+  --chart-allowed: #176b4d;
+  --chart-blocked: #b42318;
+  --chart-review: #805300;
+}
+
+[data-theme="dark"] {
+  --chart-allowed: #4adea1;
+  --chart-blocked: #ff7777;
+  --chart-review: #facc15;
+}
+
+[data-theme="contrast"] {
+  --chart-allowed: #00ffff;
+  --chart-blocked: #ff77ff;
+  --chart-review: #ffff00;
+}

@@ -1,17 +1,31 @@
-export default function Page() {
+import type { Metadata } from "next";
+import { SpendingChart } from "@/components/analytics/spending-chart";
+import { TransactionTable } from "@/components/analytics/transaction-table";
+
+export const metadata: Metadata = {
+  title: "Financial Analytics",
+};
+
+export default function AnalyticsPage() {
   return (
-    <section className="space-y-5">
-      <p className="text-sm font-semibold text-accent">INTENTRA WORKSPACE</p>
-      <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-      <p className="max-w-2xl text-muted">Explore spending and policy decision trends.</p>
-      <div className="rounded-2xl border border-border bg-surface p-8">
-        <h2 className="text-lg font-semibold">Module foundation ready</h2>
-        <p className="mt-3 text-sm leading-7 text-muted">
-          This page is available for navigation. Its functional dashboard,
-          backend integration, and accessibility testing are planned
-          for a later development milestone.
+    <div className="space-y-6">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+          Financial intelligence
         </p>
-      </div>
-    </section>
+
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
+          Analytics & transaction intelligence
+        </h1>
+
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+          Explore spending behavior, policy outcomes, and explainable
+          agent authorization decisions using simulated demonstration data.
+        </p>
+      </header>
+
+      <SpendingChart />
+      <TransactionTable />
+    </div>
   );
 }
