@@ -1,0 +1,26 @@
+
+# Local secrets
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+
+# Python
+.pytest_cache/
+*.py[cod]
+*.egg-info/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+.venv/
+
+# Frontend
+node_modules/
+.next/
+out/
+
+# macOS
+.DS_Store
