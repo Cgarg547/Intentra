@@ -42,3 +42,10 @@ class ContractApprovalRequest(BaseModel):
 
 class ContractRevocationRequest(BaseModel):
     expected_version: int = Field(ge=1)
+
+
+class ContractListResponse(BaseModel):
+    items: list[ContractResponse]
+    total: int
+    limit: int
+    offset: int

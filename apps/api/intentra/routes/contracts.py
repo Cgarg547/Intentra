@@ -2,7 +2,7 @@ import uuid
 from sqlalchemy import update, func
 from intentra.schemas.contracts import ContractApprovalRequest
 from sqlalchemy import select
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from intentra.schemas.contracts import ContractRevocationRequest
@@ -14,10 +14,40 @@ from intentra.models.intent_contract import (
     UserRecord,
 )
 from intentra.routes.auth import current_user
-from intentra.schemas.contracts import ContractCreate, ContractResponse
+from intentra.schemas.contracts import ContractCreate,ContractListResponse,  ContractResponse
 
 router = APIRouter(prefix="/api/contracts", tags=["Intent Contracts"])
 
+@router.get("", response_model=ContractListResponse)
+async def list_contracts(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    user: UserRecord = Depends(current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    total = await db.scalar(
+        select(func.count(IntentContractRecord.id)).where(
+            IntentContractRecord.owner_id == user.id,
+        )
+    )
+
+    result = await db.execute(
+        select(IntentContractRecord)
+        .where(IntentContractRecord.owner_id == user.id)
+        .order_by(
+            IntentContractRecord.created_at.desc(),
+            IntentContractRecord.id.desc(),
+        )
+        .limit(limit)
+        .offset(offset)
+    )
+
+    return ContractListResponse(
+        items=list(result.scalars().all()),
+        total=total or 0,
+        limit=limit,
+        offset=offset,
+    )
 
 @router.post(
     "",

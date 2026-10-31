@@ -271,3 +271,68 @@ async def test_concurrent_approval_only_succeeds_once():
         ]
     finally:
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_contract_listing_is_owner_scoped():
+    suffix = uuid.uuid4().hex
+    transport = ASGITransport(app=app)
+
+    async with (
+        AsyncClient(
+            transport=transport,
+            base_url="http://localhost:3000",
+            headers={"Origin": "http://localhost:3000"},
+        ) as owner,
+        AsyncClient(
+            transport=transport,
+            base_url="http://localhost:3000",
+            headers={"Origin": "http://localhost:3000"},
+        ) as outsider,
+    ):
+        for client, name in ((owner, "owner"), (outsider, "outsider")):
+            response = await client.post(
+                "/api/auth/register",
+                json={
+                    "email": f"list-{name}-{suffix}@example.com",
+                    "password": "IntentraIntegrationTest2026!",
+                },
+            )
+            assert response.status_code == 201, response.text
+
+        response = await owner.post(
+            "/api/contracts",
+            json={
+                "merchant_id": f"listing-owner-{suffix}",
+                "maximum_amount": "100.00",
+                "currency": "USD",
+            },
+        )
+        assert response.status_code == 201, response.text
+        contract_id = response.json()["id"]
+
+        response = await outsider.get("/api/contracts")
+        assert response.status_code == 200, response.text
+        assert all(
+            item["id"] != contract_id
+            for item in response.json()["items"]
+        )
+
+        response = await owner.get("/api/contracts?limit=1&offset=0")
+        assert response.status_code == 200, response.text
+
+        data = response.json()
+        assert data["limit"] == 1
+        assert data["offset"] == 0
+        assert len(data["items"]) == 1
+        assert data["items"][0]["id"] == contract_id
+
+        response = await owner.get("/api/contracts?limit=101")
+        assert response.status_code == 422
+
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://localhost:3000",
+    ) as anonymous:
+        response = await anonymous.get("/api/contracts")
+        assert response.status_code == 401
