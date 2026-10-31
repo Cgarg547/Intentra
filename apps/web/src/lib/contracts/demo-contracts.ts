@@ -1,0 +1,43 @@
+import type { IntentContract } from "./types";
+
+export const demoContracts: IntentContract[] = [
+  {
+    id: "c1e40b70-2f0b-45b2-9f83-a4c0bfae1001",
+    owner_id: null,
+    merchant_id: "CLOUD-INFRASTRUCTURE",
+    maximum_amount: "5000.00",
+    currency: "USD",
+    status: "APPROVED",
+    version: 2,
+    created_at: "2026-10-20T10:00:00Z",
+    approved_at: "2026-10-20T11:00:00Z",
+    approved_by: null,
+    revoked_at: null,
+  },
+  {
+    id: "c1e40b70-2f0b-45b2-9f83-a4c0bfae1002",
+    owner_id: null,
+    merchant_id: "DEVELOPER-TOOLS",
+    maximum_amount: "1500.00",
+    currency: "USD",
+    status: "DRAFT",
+    version: 1,
+    created_at: "2026-10-24T14:00:00Z",
+    approved_at: null,
+    approved_by: null,
+    revoked_at: null,
+  },
+  {
+    id: "c1e40b70-2f0b-45b2-9f83-a4c0bfae1003",
+    owner_id: null,
+    merchant_id: "TRAVEL-SERVICES",
+    maximum_amount: "2500.00",
+    currency: "USD",
+    status: "REVOKED",
+    version: 3,
+    created_at: "2026-10-15T09:00:00Z",
+    approved_at: "2026-10-15T10:00:00Z",
+    approved_by: null,
+    revoked_at: "2026-10-25T16:00:00Z",
+  },
+];

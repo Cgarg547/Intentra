@@ -1,17 +1,30 @@
-export default function Page() {
+import type { Metadata } from "next";
+import { ContractRegistry } from "@/components/contracts/contract-registry";
+
+export const metadata: Metadata = {
+  title: "Intent Contracts",
+};
+
+export default function ContractsPage() {
   return (
-    <section className="space-y-5">
-      <p className="text-sm font-semibold text-accent">INTENTRA WORKSPACE</p>
-      <h1 className="text-3xl font-bold tracking-tight">Intent Contracts</h1>
-      <p className="max-w-2xl text-muted">Create and manage human-approved spending boundaries.</p>
-      <div className="rounded-2xl border border-border bg-surface p-8">
-        <h2 className="text-lg font-semibold">Module foundation ready</h2>
-        <p className="mt-3 text-sm leading-7 text-muted">
-          This page is available for navigation. Its functional dashboard,
-          backend integration, and accessibility testing are planned
-          for a later development milestone.
+    <div className="space-y-6">
+      <header>
+        <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+          Human-governed financial execution
         </p>
-      </div>
-    </section>
+
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
+          Intent Contracts
+        </h1>
+
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+          Inspect spending ceilings, merchant scope, approval states,
+          and contract versions. Every authorization must respect the
+          human-approved contract rather than an agent&apos;s request alone.
+        </p>
+      </header>
+
+      <ContractRegistry />
+    </div>
   );
 }
