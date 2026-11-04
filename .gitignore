@@ -10,6 +10,10 @@ __pycache__/
 .pytest_cache/
 *.py[cod]
 *.egg-info/
+*.db
+*.sqlite
+*.sqlite3
+*.log
 
 # Environment and secrets
 .env

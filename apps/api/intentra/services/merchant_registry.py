@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import json
+import os
 from types import MappingProxyType
 from typing import Mapping
 
@@ -68,3 +70,22 @@ class TrustedMerchantRegistry:
             internal_merchant_id=internal_merchant_id,
             paypal_merchant_id=self._mappings[internal_merchant_id],
         )
+
+    def verified_mappings(self) -> tuple[VerifiedMerchant, ...]:
+        """Return immutable server-configured identities for authenticated views."""
+        return tuple(VerifiedMerchant(internal_id, paypal_id)
+                     for internal_id, paypal_id in sorted(self._mappings.items()))
+
+
+def load_trusted_merchant_registry() -> TrustedMerchantRegistry | None:
+    """Load only the trusted internal-to-provider identity map; never credentials."""
+    raw = os.getenv("PAYPAL_SANDBOX_MERCHANTS")
+    if not raw:
+        return None
+    try:
+        mappings = json.loads(raw)
+        if not isinstance(mappings, dict):
+            raise ValueError
+        return TrustedMerchantRegistry(mappings)
+    except (json.JSONDecodeError, ValueError, TypeError, MerchantRegistryError):
+        raise MerchantRegistryError("Trusted merchant registry is unavailable.") from None

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthPanel } from "@/components/auth/auth-panel";
+import { AccountSessionStatus } from "@/components/auth/account-session-status";
 
 export const metadata: Metadata = {
   title: "Account",
@@ -23,6 +24,7 @@ export default function AccountPage() {
       </div>
 
       <AuthPanel />
+      <AccountSessionStatus />
     </main>
   );
 }

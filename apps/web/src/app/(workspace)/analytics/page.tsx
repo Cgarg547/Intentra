@@ -1,31 +1,40 @@
-import type { Metadata } from "next";
-import { SpendingChart } from "@/components/analytics/spending-chart";
-import { TransactionTable } from "@/components/analytics/transaction-table";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Financial Analytics",
-};
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { loadAnalytics, type AnalyticsSummary } from "@/lib/workspace/client";
+import { getCurrentUser } from "@/lib/auth/client";
+import { readWorkspacePreferences } from "@/lib/workspace/preferences";
 
 export default function AnalyticsPage() {
-  return (
-    <div className="space-y-6">
-      <header>
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent">
-          Financial intelligence
-        </p>
-
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-          Analytics & transaction intelligence
-        </h1>
-
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-          Explore spending behavior, policy outcomes, and explainable
-          agent authorization decisions using simulated demonstration data.
-        </p>
-      </header>
-
-      <SpendingChart />
-      <TransactionTable />
-    </div>
-  );
+  const [data, setData] = useState<AnalyticsSummary | null>(null);
+  const [query, setQuery] = useState("");
+  const [stateFilter, setStateFilter] = useState("ALL");
+  const [currency, setCurrency] = useState("ALL");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const refresh = useCallback(async () => { setLoading(true); setError(null); try { setData(await loadAnalytics()); } catch (cause) { setError(cause instanceof Error ? cause.message : "Analytics unavailable."); } finally { setLoading(false); } }, []);
+  useEffect(() => {
+    let active = true;
+    loadAnalytics().then((result) => { if (active) setData(result); })
+      .catch((cause: unknown) => { if (active) setError(cause instanceof Error ? cause.message : "Analytics unavailable."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => { let active = true; getCurrentUser().then((user) => { if (active) setCurrency(readWorkspacePreferences(user.id).analyticsCurrency); }).catch(() => {}); return () => { active = false; }; }, []);
+  const transactions = useMemo(() => (data?.transactions ?? []).filter((item) =>
+    (stateFilter === "ALL" || item.state === stateFilter) && (currency === "ALL" || item.currency === currency)
+    && `${item.attempt_id} ${item.merchant_id} ${item.state} ${item.reservation_state}`.toLowerCase().includes(query.toLowerCase())), [data, stateFilter, currency, query]);
+  const currencies = [...new Set((data?.transactions ?? []).map((item) => item.currency))];
+  const money = (value: string | number, code: string) => new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(Number(value));
+  return <section className="space-y-6">
+    <header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-widest text-accent">Owner-scoped records</p><h1 className="mt-2 text-3xl font-semibold">Analytics & transaction intelligence</h1><p className="mt-2 max-w-2xl text-sm text-muted">Aggregates come from saved reservations, payment outcomes, contract evaluations, and proposals. Amounts stay in their recorded currencies; no FX conversion is applied.</p></div><button type="button" onClick={() => void refresh()} disabled={loading} className="rounded-xl border border-border px-4 py-2 text-sm">Refresh</button></header>
+    {error && <p role="alert" className="rounded-xl border border-red-500/40 p-4 text-sm text-red-600">{error}</p>}
+    {loading && !data ? <p role="status" className="rounded-2xl border border-border bg-surface p-6">Loading financial records…</p> : data && <>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{[["Payment attempts", data.payments.count], ["Successful attempts", data.payments.successful_count], ["Uncertain outcomes", data.payments.unknown_count], ["Proposals", Object.values(data.proposals).reduce((sum, value) => sum + value, 0)]].map(([label, value]) => <article key={String(label)} className="rounded-2xl border border-border bg-surface p-5"><p className="text-sm text-muted">{label}</p><p className="mt-3 text-2xl font-semibold">{loading ? "—" : value}</p></article>)}</section>
+      <div className="grid gap-4 lg:grid-cols-2"><section className="rounded-2xl border border-border bg-surface p-5"><h2 className="font-semibold">Payment outcomes</h2>{data.payment_states.length === 0 ? <p className="mt-4 text-sm text-muted">No payment attempts recorded.</p> : <ul className="mt-4 space-y-3">{data.payment_states.map((row) => <li key={`${row.state}-${row.currency}`} className="flex justify-between gap-3 border-b border-border pb-2 text-sm"><span>{row.state} · {row.currency}</span><span>{row.count} · {money(row.amount, row.currency)}</span></li>)}</ul>}</section><section className="rounded-2xl border border-border bg-surface p-5"><h2 className="font-semibold">Deterministic policy evaluations</h2><dl className="mt-4 grid grid-cols-3 gap-3">{["ALLOW", "BLOCK", "REVIEW"].map((decision) => <div key={decision} className="rounded-xl bg-surface-muted p-3"><dt className="text-xs text-muted">{decision}</dt><dd className="mt-1 text-xl font-semibold">{data.policy_decisions[decision] ?? 0}</dd></div>)}</dl><p className="mt-3 text-xs text-muted">Stored evaluations do not imply buyer approval or payment capture.</p></section></div>
+      <section className="rounded-2xl border border-border bg-surface p-5"><h2 className="font-semibold">Contract budget utilization</h2>{data.budget_by_contract.length === 0 ? <p className="mt-3 text-sm text-muted">No contracts are available for budget analysis.</p> : <div className="mt-4 space-y-4">{data.budget_by_contract.map((item) => { const ratio = Math.min(100, Number(item.consumed_amount) / Number(item.maximum_amount) * 100); return <div key={item.contract_id}><div className="flex flex-wrap justify-between gap-2 text-sm"><span className="break-all">{item.merchant_id} · {item.status}</span><span>{money(item.consumed_amount, item.currency)} / {money(item.maximum_amount, item.currency)}</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-muted"><div className="h-full bg-accent" style={{ width: `${ratio}%` }} /></div><p className="mt-1 text-xs text-muted">Remaining {money(item.remaining_amount, item.currency)}</p></div>; })}</div>}</section>
+      <section className="rounded-2xl border border-border bg-surface p-5"><h2 className="font-semibold">Captured trends · last 30 days</h2>{data.daily_captured.filter((row) => currency === "ALL" || row.currency === currency).length === 0 ? <p className="mt-3 text-sm text-muted">No captured transactions in this period for the selected currency.</p> : <div className="mt-4 space-y-2">{data.daily_captured.filter((row) => currency === "ALL" || row.currency === currency).slice(-12).map((row) => <div key={`${row.date}-${row.currency}`} className="grid grid-cols-[5rem_1fr_auto] items-center gap-3 text-xs"><span className="text-muted">{row.date}</span><div className="h-2 overflow-hidden rounded-full bg-surface-muted"><div className="h-full bg-accent" style={{ width: `${Math.max(4, Number(row.count) * 12)}%` }} /></div><span>{row.count} · {money(row.amount, row.currency)}</span></div>)}</div>}</section>
+      <section className="rounded-2xl border border-border bg-surface p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold">Transaction intelligence</h2><p className="mt-1 text-sm text-muted">Recent owner-scoped payment attempts. Amounts remain in original currency.</p></div><div className="flex gap-2"><label className="sr-only" htmlFor="analytics-currency">Currency filter</label><select id="analytics-currency" value={currency} onChange={(event) => setCurrency(event.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm"><option value="ALL">All currencies</option>{currencies.map((code) => <option key={code}>{code}</option>)}</select><label className="sr-only" htmlFor="analytics-state">Payment state filter</label><select id="analytics-state" value={stateFilter} onChange={(event) => setStateFilter(event.target.value)} className="rounded-lg border border-border bg-background px-3 py-2 text-sm"><option value="ALL">All states</option>{["PENDING", "UNKNOWN", "SUCCEEDED", "FAILED"].map((state) => <option key={state}>{state}</option>)}</select></div></div><label className="mt-4 block max-w-md space-y-1 text-sm"><span>Search payment history</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Attempt, merchant, state" className="w-full rounded-lg border border-border bg-background px-3 py-2" /></label>{transactions.length === 0 ? <p className="mt-4 rounded-xl bg-surface-muted p-4 text-sm text-muted">No stored payments match these filters.</p> : <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead><tr className="border-b border-border text-muted"><th className="px-3 py-3">Attempt</th><th className="px-3 py-3">Merchant</th><th className="px-3 py-3">Amount</th><th className="px-3 py-3">Payment</th><th className="px-3 py-3">Reservation</th><th className="px-3 py-3">Buyer approval</th></tr></thead><tbody className="divide-y divide-border">{transactions.map((item) => <tr key={item.attempt_id}><th scope="row" className="px-3 py-3 font-mono text-xs">{item.attempt_id}</th><td className="px-3 py-3">{item.merchant_id}</td><td className="px-3 py-3">{money(item.amount, item.currency)}</td><td className="px-3 py-3">{item.state}</td><td className="px-3 py-3">{item.reservation_state}</td><td className="px-3 py-3">{item.approval_state ?? "Not initiated"}</td></tr>)}</tbody></table></div>}</section>
+    </>}
+  </section>;
 }

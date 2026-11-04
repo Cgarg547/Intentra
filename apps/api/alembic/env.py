@@ -7,6 +7,10 @@ from intentra.models.payment_evaluation import PaymentEvaluationRecord  # noqa: 
 from intentra.models.payment_reservation import PaymentReservationRecord  # noqa: F401
 from intentra.models.payment_attempt import PaymentAttemptRecord  # noqa: F401
 from intentra.models.payment_reconciliation_event import PaymentReconciliationEventRecord  # noqa: F401
+from intentra.models.payment_checkout_approval import PaymentCheckoutApprovalRecord  # noqa: F401
+from intentra.models.payment_attempt_event import PaymentAttemptEventRecord  # noqa: F401
+from intentra.models.agent_proposal import AgentProposalRecord, AgentProposalEventRecord  # noqa: F401
+from intentra.models.agent_payment_handoff import AgentPaymentHandoffRecord  # noqa: F401
 from logging.config import fileConfig
 
 

@@ -10,6 +10,7 @@ import {
   Settings2,
   ShieldCheck,
   Store,
+  UserRound,
 } from "lucide-react";
 
 export const navigation = [
@@ -24,4 +25,5 @@ export const navigation = [
   { label: "Merchants", href: "/merchants", icon: Store },
   { label: "System Status", href: "/status", icon: Activity },
   { label: "Settings", href: "/settings", icon: Settings2 },
+  { label: "Account", href: "/account", icon: UserRound },
 ] as const;

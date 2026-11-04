@@ -10,7 +10,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-import { listContracts } from "@/lib/contracts/client";
+import { approveContract, createContract, listContracts, revokeContract } from "@/lib/contracts/client";
 import type {
   ContractStatus,
   IntentContract,
@@ -41,6 +41,11 @@ export function ContractRegistry() {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [merchantId, setMerchantId] = useState("");
+  const [maximumAmount, setMaximumAmount] = useState("");
+  const [currency, setCurrency] = useState("USD");
+  const [saving, setSaving] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
 useEffect(() => {
   let active = true;
@@ -123,6 +128,28 @@ useEffect(() => {
     setRefreshKey((value) => value + 1);
   }
 
+  async function submitContract(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true); setActionError(null);
+    try {
+      const created = await createContract({ merchant_id: merchantId.trim(), maximum_amount: maximumAmount, currency });
+      setMerchantId(""); setMaximumAmount(""); setSelectedId(created.id); refreshContracts();
+    } catch (err) { setActionError(err instanceof Error ? err.message : "Unable to create contract."); }
+    finally { setSaving(false); }
+  }
+
+  async function updateContract(action: "approve" | "revoke") {
+    if (!selected) return;
+    if (action === "revoke" && !window.confirm(`Revoke the contract for ${selected.merchant_id}? New payments will be blocked.`)) return;
+    setSaving(true); setActionError(null);
+    try {
+      if (action === "approve") await approveContract(selected.id, selected.version);
+      else await revokeContract(selected.id, selected.version);
+      refreshContracts();
+    } catch (err) { setActionError(err instanceof Error ? err.message : "Unable to update contract."); }
+    finally { setSaving(false); }
+  }
+
   return (
     <div className="space-y-6">
       <section
@@ -176,7 +203,7 @@ useEffect(() => {
 
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full border border-border px-3 py-1 text-xs text-muted">
-              Live PostgreSQL records — read only
+              Authenticated account records
             </span>
 
             <button
@@ -365,6 +392,18 @@ useEffect(() => {
         )}
       </section>
 
+      <section className="rounded-2xl border border-border bg-surface p-6">
+        <h2 className="text-xl font-semibold">Create an intent contract</h2>
+        <p className="mt-1 text-sm text-muted">New contracts start as drafts and require your explicit approval before payment authorization.</p>
+        <form onSubmit={submitContract} className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <label className="space-y-2 text-sm"><span>Merchant ID</span><input required maxLength={128} value={merchantId} onChange={(e) => setMerchantId(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" placeholder="Registered merchant ID" /></label>
+          <label className="space-y-2 text-sm"><span>Maximum amount</span><input required min="0.01" step="0.01" type="number" value={maximumAmount} onChange={(e) => setMaximumAmount(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" placeholder="250.00" /></label>
+          <label className="space-y-2 text-sm"><span>Currency</span><input required minLength={3} maxLength={3} pattern="[A-Z]{3}" value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" /></label>
+          <div className="flex items-end"><button disabled={saving} className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-50">{saving ? "Saving…" : "Create draft"}</button></div>
+        </form>
+        {actionError && <p role="alert" className="mt-4 text-sm text-red-500">{actionError}</p>}
+      </section>
+
       {!loading && !error && selected && (
         <section
           aria-labelledby="contract-details-heading"
@@ -432,9 +471,12 @@ useEffect(() => {
           </dl>
 
           <p className="mt-6 border-t border-border pt-4 text-xs text-muted">
-            This contract is stored in PostgreSQL. Approval and
-            revocation actions are not yet enabled in the frontend.
+            This contract is stored in the authenticated account. Approving or revoking changes its authorization version.
           </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {selected.status === "DRAFT" && <button type="button" disabled={saving} onClick={() => updateContract("approve")} className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-50">Approve contract</button>}
+            {selected.status === "APPROVED" && <button type="button" disabled={saving} onClick={() => updateContract("revoke")} className="rounded-xl border border-red-500/40 px-4 py-2.5 text-sm font-semibold text-red-600 disabled:opacity-50">Revoke contract</button>}
+          </div>
         </section>
       )}
     </div>

@@ -1,17 +1,16 @@
-export default function Page() {
-  return (
-    <section className="space-y-5">
-      <p className="text-sm font-semibold text-accent">INTENTRA WORKSPACE</p>
-      <h1 className="text-3xl font-bold tracking-tight">Payments</h1>
-      <p className="max-w-2xl text-muted">Review reservations, attempts, and provider outcomes.</p>
-      <div className="rounded-2xl border border-border bg-surface p-8">
-        <h2 className="text-lg font-semibold">Module foundation ready</h2>
-        <p className="mt-3 text-sm leading-7 text-muted">
-          This page is available for navigation. Its functional dashboard,
-          backend integration, and accessibility testing are planned
-          for a later development milestone.
-        </p>
-      </div>
-    </section>
-  );
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { PaymentWorkspace } from "@/components/payments/payment-workspace";
+
+export const metadata: Metadata = { title: "Payments" };
+
+export default function PaymentsPage() {
+  return <div className="space-y-6">
+    <header>
+      <p className="text-xs font-semibold uppercase tracking-widest text-accent">Payment authorization and execution</p>
+      <h1 className="mt-2 text-3xl font-semibold tracking-tight">Payments</h1>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Evaluate payment proposals against approved contracts, reserve budget, approve through PayPal Sandbox, and inspect verified outcomes.</p>
+    </header>
+    <Suspense fallback={<div role="status" className="h-40 animate-pulse rounded-2xl border border-border bg-surface" />}><PaymentWorkspace /></Suspense>
+  </div>;
 }

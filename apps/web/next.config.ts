@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  distDir: process.env.INTENTRA_NEXT_DIST_DIR ?? ".next",
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
 

@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
     String,
+    Numeric,
     UniqueConstraint,
     func,
 )
@@ -30,6 +32,10 @@ class PaymentAttemptRecord(Base):
             "provider_order_id",
             name="uq_payment_attempt_provider_order",
         ),
+        UniqueConstraint("capture_id", name="uq_payment_attempt_capture_id"),
+        UniqueConstraint("capture_idempotency_key", name="uq_payment_attempt_capture_key"),
+        CheckConstraint("capture_idempotency_key IS NULL OR length(capture_idempotency_key) BETWEEN 1 AND 108", name="ck_payment_attempt_capture_key_length"),
+        CheckConstraint("capture_id IS NULL OR capture_claimed_at IS NOT NULL", name="ck_payment_attempt_capture_claimed"),
         CheckConstraint(
             "status IN ('PENDING', 'SUCCEEDED', 'FAILED', 'UNKNOWN')",
             name="ck_payment_attempt_status",
@@ -56,6 +62,10 @@ class PaymentAttemptRecord(Base):
         String(128),
         nullable=True,
     )
+
+    capture_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    capture_idempotency_key: Mapped[str | None] = mapped_column(String(108), nullable=True)
+    capture_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     status: Mapped[str] = mapped_column(
         String(16),

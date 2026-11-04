@@ -1,8 +1,9 @@
 import secrets
+import logging
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +22,7 @@ from intentra.services.auth import (
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 COOKIE_NAME = "intentra_session"
+logger = logging.getLogger(__name__)
 
 
 class Credentials(BaseModel):
@@ -34,11 +36,18 @@ class UserResponse(BaseModel):
 
 
 async def current_user(
+    request: Request,
     intentra_session: str | None = Cookie(default=None),
     db: AsyncSession = Depends(get_db),
 ) -> UserRecord:
     if not intentra_session:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        code = "AUTHENTICATION_REQUIRED"
+        logger.warning("request_rejected", extra={
+            "event_name": "request_rejected", "error_code": code,
+            "correlation_id": getattr(request.state, "correlation_id", None),
+        })
+        raise HTTPException(status_code=401, detail="Not authenticated",
+                            headers={"X-Intentra-Error-Code": code})
 
     token_hash = hash_session_token(intentra_session)
 
@@ -55,7 +64,13 @@ async def current_user(
     row = result.one_or_none()
 
     if row is None:
-        raise HTTPException(status_code=401, detail="Invalid session")
+        code = "SESSION_INVALID"
+        logger.warning("request_rejected", extra={
+            "event_name": "request_rejected", "error_code": code,
+            "correlation_id": getattr(request.state, "correlation_id", None),
+        })
+        raise HTTPException(status_code=401, detail="Invalid session",
+                            headers={"X-Intentra-Error-Code": code})
 
     return row[1]
 

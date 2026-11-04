@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from intentra.routes.auth import router as auth_router
+from intentra.routes.agents import router as agents_router
+from intentra.routes.workspace import router as workspace_router
 
 app = FastAPI(
     title="INTENTRA API",
@@ -23,6 +25,8 @@ app.add_middleware(OriginProtectionMiddleware)
 app.include_router(auth_router)
 app.include_router(contracts_router)
 app.include_router(payments_router)
+app.include_router(agents_router)
+app.include_router(workspace_router)
 
 @app.get("/health")
 def health():

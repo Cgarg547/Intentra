@@ -24,6 +24,7 @@ ALLOWED_EVENTS = frozenset({
 
 ALLOWED_EVIDENCE_KEYS = frozenset({
     "reason_code",
+    "capture_id",
     "verified_merchant_id",
     "verified_amount",
     "verified_currency",

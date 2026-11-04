@@ -66,12 +66,36 @@ async def claim_payment_execution(
     if reservation is None:
         raise ExecutionClaimError("Reservation not found.")
 
-    existing = await db.scalar(
-        select(PaymentAttemptRecord).where(
-            PaymentAttemptRecord.reservation_id == reservation.id
-        )
+    claim = await claim_payment_execution_locked(
+        db, contract=contract, reservation=reservation, actor_id=actor_id
     )
+    if claim.newly_claimed:
+        await db.commit()
+    return claim
 
+
+async def claim_payment_execution_locked(
+    db: AsyncSession,
+    *,
+    contract: IntentContractRecord,
+    reservation: PaymentReservationRecord,
+    actor_id: uuid.UUID,
+) -> ExecutionClaim:
+    """Claim an attempt in a caller-owned transaction after parent row locks.
+
+    The required lock order is contract, reservation, attempt. This helper
+    performs no locking itself, commits nothing, and never contacts a provider.
+    """
+    if reservation.actor_id != actor_id or contract.owner_id != actor_id:
+        raise ExecutionClaimError("Reservation not found.")
+    if reservation.contract_id != contract.id:
+        raise ExecutionClaimError("Reservation does not match contract.")
+
+    existing = await db.scalar(
+        select(PaymentAttemptRecord)
+        .where(PaymentAttemptRecord.reservation_id == reservation.id)
+        .with_for_update()
+    )
     if existing is not None:
         return ExecutionClaim(
             attempt_id=existing.id,
@@ -124,5 +148,4 @@ async def claim_payment_execution(
         newly_claimed=True,
     )
 
-    await db.commit()
     return result
