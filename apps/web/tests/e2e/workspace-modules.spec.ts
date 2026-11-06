@@ -83,7 +83,33 @@ test("audit, security, merchant and status screens show live API response data",
   await expect(page.getByText("Mapping configured; not reverified here")).toBeVisible();
   await page.goto("/status");
   await expect(page.getByText("credentials configured")).toBeVisible();
+  await expect(page.getByText("Unavailable — not reported")).toHaveCount(3);
   await expect(page.getByText(/does not verify provider availability/)).toBeVisible();
+});
+
+test("audit filters clear details for an event outside the current results", async ({ page }) => {
+  await mockModules(page);
+  await page.route("**/api/workspace/audit**", async (route) => {
+    const eventType = new URL(route.request().url()).searchParams.get("event_type");
+    const first = {
+      event_id: "event-first", correlation_id: "corr-first", entity_type: "payment", entity_id: "attempt-first",
+      related_ids: {}, actor_id: "owner-1", actor_email: "owner@example.com", event_type: "FIRST_EVENT",
+      event_data: { marker: "first" }, created_at: new Date().toISOString(),
+    };
+    const second = {
+      ...first, event_id: "event-second", correlation_id: "corr-second", entity_id: "attempt-second",
+      event_type: "SECOND_EVENT", event_data: { marker: "second" },
+    };
+    await route.fulfill({ status: 200, json: { items: eventType === "SECOND_EVENT" ? [second] : [first], limit: 50, offset: 0, next_offset: null } });
+  });
+
+  await page.goto("/audit");
+  await page.getByRole("button", { name: "FIRST_EVENT" }).click();
+  await expect(page.getByText('"marker": "first"')).toBeVisible();
+  await page.getByLabel("Event type").fill("SECOND_EVENT");
+  await expect(page.getByRole("button", { name: "SECOND_EVENT" })).toBeVisible();
+  await expect(page.getByText("Select an event to inspect its recorded evidence.")).toBeVisible();
+  await expect(page.getByText('"marker": "first"')).toHaveCount(0);
 });
 
 test("analytics searches real owner transaction rows and remains mobile sized", async ({ page }) => {

@@ -2,7 +2,9 @@
 # Local secrets
 .env
 .env.*
+.env.ci.test
 !.env.example
+!.env.ci.test.example
 .venv/
 __pycache__/
 
@@ -18,7 +20,9 @@ __pycache__/
 # Environment and secrets
 .env
 .env.*
+.env.ci.test
 !.env.example
+!.env.ci.test.example
 .venv/
 
 # Frontend

@@ -4,38 +4,35 @@ import uuid
 
 import pytest
 from sqlalchemy.pool import NullPool
-from intentra import database
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
-from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import create_async_engine
+from tests.integration_db_guard import (
+    IntegrationDatabaseConfigurationError,
+    configured_integration_database_url,
+)
 
 
 def require_test_database():
-    raw_url = os.getenv("DATABASE_URL")
+    try:
+        raw_url = configured_integration_database_url(os.environ)
+    except IntegrationDatabaseConfigurationError as exc:
+        pytest.fail(str(exc), pytrace=False)
 
     if not raw_url:
         pytest.skip(
             "Integration tests require explicit DATABASE_URL",
             allow_module_level=True,
         )
-
-    url = make_url(raw_url)
-
-    if (
-        url.database != "intentra_test"
-        or url.host != "127.0.0.1"
-        or url.port != 5433
-    ):
-        pytest.fail(
-            "Refusing integration tests outside local intentra_test",
-            pytrace=False,
-        )
-
     return raw_url
 
 
 TEST_DATABASE_URL = require_test_database()
+
+# The explicit CI URL is validated before the application database module can
+# initialize its default engine or FastAPI imports it.
+from intentra import database  # noqa: E402
+
 database.engine = create_async_engine(
     TEST_DATABASE_URL,
     poolclass=NullPool,

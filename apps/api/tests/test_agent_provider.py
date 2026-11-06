@@ -272,7 +272,8 @@ async def test_ollama_extracts_schema_constrained_purchase_without_external_rout
     body = json.loads(calls[0].content)
     assert body["stream"] is False
     assert body["model"] == "qwen3:4b"
-    assert body["options"] == {"temperature": 0, "num_predict": 300, "num_ctx": 4096}
+    assert body["think"] is False
+    assert body["options"] == {"temperature": 0, "num_predict": 1024, "num_ctx": 4096}
     assert body["format"]["additionalProperties"] is False
     assert body["format"]["required"] == ["purpose", "merchant_id", "amount", "currency"]
     assert body["format"]["additionalProperties"] is False
@@ -379,6 +380,36 @@ async def test_ollama_requires_message_content_even_when_thinking_is_present(out
     with pytest.raises(AgentProviderError) as caught:
         await provider.extract("Buy a keyboard for USD 1.00")
     assert caught.value.code == "OLLAMA_INVALID_RESPONSE"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("outer", [
+    {"done": True, "done_reason": "length", "message": {"thinking": "PRIVATE", "content": ""}},
+    {"done": True, "done_reason": "length", "message": {"content": '{"purpose":'}},
+    {"done": True, "done_reason": "length", "message": {"content":
+        '{"purpose":null,"merchant_id":null,"amount":null,"currency":'}},
+    {"message": {"content": '```json\n{}\n```'}},
+    {"error": "PRIVATE"},
+    [],
+])
+async def test_ollama_truncated_thinking_and_invalid_envelopes_fail_closed(outer, caplog):
+    calls = []
+
+    async def response(_request):
+        body = json.loads(_request.content)
+        assert body["think"] is False
+        assert body["options"]["num_predict"] == 1024
+        calls.append(_request.method)
+        return httpx.Response(200, json=outer)
+
+    provider = OllamaPurchasePlanningProvider(
+        base_url="http://127.0.0.1:11434", model="qwen3:4b", transport=httpx.MockTransport(response))
+    with caplog.at_level(logging.INFO, logger="intentra.proposal_diagnostics"):
+        with pytest.raises(AgentProviderError) as caught:
+            await provider.extract("Buy an item")
+    assert caught.value.code == "OLLAMA_INVALID_RESPONSE"
+    assert "PRIVATE" not in caplog.text + str(caught.value)
+    assert calls == ["POST"]
 
 
 @pytest.mark.asyncio

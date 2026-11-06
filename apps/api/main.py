@@ -1,3 +1,4 @@
+import os
 from intentra.routes.payments import router as payments_router
 from intentra.routes.contracts import router as contracts_router
 from intentra.middleware.origin import OriginProtectionMiddleware
@@ -16,7 +17,14 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        origin.strip()
+        for origin in os.getenv(
+            "INTENTRA_CORS_ORIGINS",
+            "http://localhost:3000",
+        ).split(",")
+        if origin.strip()
+    ],
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],

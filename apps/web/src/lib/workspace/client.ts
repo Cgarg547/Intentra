@@ -30,7 +30,10 @@ export type AnalyticsSummary = {
   daily_captured: { date: string; currency: string; amount: string; count: number }[];
   transactions: { attempt_id: string; reservation_id: string; contract_id: string; merchant_id: string; amount: string; currency: string; state: string; reservation_state: string; approval_state: string | null; created_at: string }[];
 };
-export type SystemStatus = { api: string; database: string; paypal_sandbox: string; trusted_merchants: string; llm_mode: string; llm_provider: string; llm_runtime: string; llm_model_status: string; checked_at: string };
+// The API currently returns all fields, but older deployments and partial
+// status responses can omit optional provider diagnostics. Treat omissions as
+// unknown in the UI rather than implying a healthy configuration.
+export type SystemStatus = { api?: string; database?: string; paypal_sandbox?: string; trusted_merchants?: string; llm_mode?: string; llm_provider?: string; llm_runtime?: string; llm_model_status?: string; checked_at?: string };
 
 async function request<T>(path: string): Promise<T> {
   const response = await fetch(path, { credentials: "same-origin", cache: "no-store" });

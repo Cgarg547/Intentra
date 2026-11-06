@@ -101,6 +101,42 @@ test("registration, login and logout use the account form", async ({ page }) => 
   await expect(page.getByText("Signed in as")).toBeVisible();
 });
 
+test("account session status refreshes after account authentication changes", async ({ page }) => {
+  let authenticated = false;
+  await page.route("**/api/auth/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.endsWith("/me")) {
+      return route.fulfill(authenticated
+        ? { status: 200, json: { id: "user-1", email: "owner@example.com" } }
+        : { status: 401, json: { detail: "Not authenticated" } });
+    }
+    if (path.endsWith("/login")) {
+      authenticated = true;
+      return route.fulfill({ status: 200, json: { id: "user-1", email: "owner@example.com" } });
+    }
+    if (path.endsWith("/logout")) {
+      authenticated = false;
+      return route.fulfill({ status: 204 });
+    }
+    return route.fulfill({ status: 404 });
+  });
+  await page.route("**/api/workspace/security", async (route) => route.fulfill({
+    status: authenticated ? 200 : 401,
+    json: authenticated
+      ? { authenticated: true, active_session_count: 1, current_session_valid: true, contracts: {}, trusted_merchant_count: 0, payment_states: {}, policy_decisions: {}, unresolved_attempts: 0, generated_at: new Date().toISOString() }
+      : { detail: "Not authenticated" },
+  }));
+
+  await page.goto("/account");
+  await expect(page.getByText("Sign in to inspect session status for this account.")).toBeVisible();
+  await page.getByLabel("Email address").fill("owner@example.com");
+  await page.getByLabel("Password").fill("IntentraSecureTestPassword2026!");
+  await page.getByRole("button", { name: "Sign in", exact: true }).last().click();
+  await expect(page.getByText("Current session: valid. 1 active session for this account.")).toBeVisible();
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page.getByText("Sign in to inspect session status for this account.")).toBeVisible();
+});
+
 test("creates a draft contract and approves it", async ({ page }) => {
   await mockWorkspace(page);
   await page.goto("/contracts");

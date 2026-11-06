@@ -31,13 +31,14 @@ from intentra.services.paypal_sandbox import (
     PayPalSandboxClient,
     PayPalSandboxConfig,
 )
+from intentra.schema_head import CURRENT_ALEMBIC_HEAD, has_current_schema_head
 
 
 CONFIG_PATH = API_ROOT / ".env.paypal.sandbox.json"
 FRONTEND_URL = "http://localhost:3000"
 ALLOWED_ORIGINS = "http://localhost:3000"
 FRONTEND_API_URL = "http://127.0.0.1:8000"
-TARGET_REVISION = "9d7f1a4c6b20"
+TARGET_REVISION = CURRENT_ALEMBIC_HEAD
 PAYPAL_ACCOUNT_ID_PATTERN = re.compile(r"[2-9A-HJ-NP-Z]{13}\Z")
 
 
@@ -60,12 +61,12 @@ async def _contract_merchants() -> list[str]:
         async with engine.connect() as connection:
             async with connection.begin():
                 await connection.exec_driver_sql("SET TRANSACTION READ ONLY")
-                revision = (
+                revisions = (
                     await connection.exec_driver_sql(
                         "SELECT version_num FROM alembic_version"
                     )
-                ).scalar_one()
-                if revision != TARGET_REVISION:
+                ).scalars().all()
+                if not has_current_schema_head(revisions):
                     raise RuntimeError("Development database revision is not current.")
                 merchants = (
                     await connection.exec_driver_sql(

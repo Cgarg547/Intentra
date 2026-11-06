@@ -57,13 +57,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <aside
           id="primary-navigation"
           aria-label="Primary navigation"
-          className={`fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto border-r border-border bg-surface p-5 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto border-r border-border bg-surface p-5 shadow-2xl shadow-black/5 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ${
             menuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
           <div className="mb-8 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
-              <span className="rounded-xl bg-accent p-2 text-accent-foreground">
+              <span className="rounded-xl bg-accent p-2 text-accent-foreground shadow-sm">
                 <ShieldCheck size={24} aria-hidden="true" />
               </span>
               <span>
@@ -91,6 +91,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </p>
             <div className="space-y-1">{navLinks}</div>
           </nav>
+          <div className="mt-8 rounded-xl border border-border bg-surface-muted p-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted">Environment</p>
+            <p className="mt-2 text-sm font-semibold">Sandbox workspace</p>
+            <p className="mt-1 text-xs leading-5 text-muted">No live payment actions are represented here.</p>
+          </div>
         </aside>
 
         {menuOpen && (
@@ -103,7 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex min-h-20 items-center justify-between gap-3 border-b border-border bg-surface px-4 sm:px-8">
+          <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-2 border-b border-border bg-background/95 px-4 backdrop-blur sm:min-h-20 sm:gap-3 sm:px-8">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -115,11 +120,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Menu size={21} aria-hidden="true" />
               </button>
-              <div>
-                <p className="text-sm font-bold">INTENTRA Workspace</p>
-                <p className="text-xs text-muted">
-                  Human-governed AI payments
-                </p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold"><span className="sm:hidden">INTENTRA</span><span className="hidden sm:inline">INTENTRA Workspace</span></p>
+                <p className="hidden text-xs text-muted sm:block">Human-authorized AI commerce</p>
               </div>
             </div>
             <ThemeSelector />
@@ -128,7 +131,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <main
             id="main-content"
             tabIndex={-1}
-            className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 outline-none sm:px-8"
+            className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-7 outline-none sm:px-8 sm:py-9"
           >
             {children}
           </main>

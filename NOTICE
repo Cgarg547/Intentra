@@ -1,0 +1,12 @@
+INTENTRA
+Copyright 2026 Chirag Garg
+
+INTENTRA's original code and documentation are licensed under the
+Apache License, Version 2.0. See LICENSE for the complete license text.
+
+Third-party code, dependencies, data, model artifacts, and branding remain
+subject to their respective licenses and rights. This notice does not
+relicense those materials or grant rights to third-party trademarks.
+See docs/licensing-review.md for the current dependency and asset review.
+Retain upstream copyright, license, and NOTICE files when redistributing
+third-party materials; this project notice does not replace them.

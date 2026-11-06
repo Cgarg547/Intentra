@@ -28,6 +28,7 @@ sys.path.insert(0, str(API_ROOT))
 from intentra.services.merchant_registry import MerchantRegistryError, TrustedMerchantRegistry  # noqa: E402
 from intentra.services.paypal_sandbox import PayPalSandboxClient, PayPalSandboxConfig  # noqa: E402
 from intentra.services.payment_order_recovery import recover_existing_paypal_order  # noqa: E402
+from intentra.schema_head import CURRENT_ALEMBIC_HEAD, has_current_schema_head  # noqa: E402
 
 
 ATTEMPT_ID = "b2d84ff1-1905-4c09-9d43-9280e5d89e33"
@@ -35,7 +36,7 @@ RESERVATION_ID = "4c83cc56-7b8d-4851-9d99-b6a72ca74680"
 CONTRACT_ID = "daaf9bed-903b-4736-9765-a67ede53820c"
 ORDER_ID = "23X93125BY7169413"
 INTERNAL_MERCHANT_ID = "paypal_merchant_demo"
-TARGET_REVISION = "f1a2b3c4d5e6"
+TARGET_REVISION = CURRENT_ALEMBIC_HEAD
 CONFIG_PATH = API_ROOT / ".env.paypal.sandbox.json"
 
 
@@ -100,10 +101,11 @@ async def _run() -> None:
                 identity = (await connection.execute(text(
                     "SELECT current_database(), current_user, inet_server_port()"
                 ))).one()
-                revision = (await connection.execute(text(
+                revisions = (await connection.execute(text(
                     "SELECT version_num FROM alembic_version"
-                ))).scalar_one()
-                if identity[0] != "intentra" or identity[1] != "intentra" or revision != TARGET_REVISION:
+                ))).scalars().all()
+                if (identity[0] != "intentra" or identity[1] != "intentra"
+                        or not has_current_schema_head(revisions)):
                     raise RuntimeError("Development database identity or revision changed.")
 
         config = _read_provider_config()

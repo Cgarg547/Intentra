@@ -26,7 +26,7 @@ export function ThemeSelector() {
 
   return (
     <label className="flex items-center gap-2 text-sm">
-      <span className="text-muted">Appearance</span>
+      <span className="hidden text-muted sm:inline">Appearance</span>
 
       <select
         aria-label="Appearance theme"
