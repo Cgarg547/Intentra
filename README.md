@@ -27,6 +27,12 @@ not establish a single current discovery-to-payment journey. The owner has appro
 Local adoption is complete; public GitHub license recognition awaits approved
 publication and verification.
 
+For the current release gate, use the evidence-labelled
+[final hackathon checklist](docs/final-hackathon-checklist.md). Draft submission
+copy, recording boundaries and judge-safe setup are in
+[docs/submission](docs/submission/); they are preparation, not evidence that a
+video, Devpost entry, public repository or provider transaction exists.
+
 ## Architecture
 
 ```mermaid
@@ -38,7 +44,8 @@ flowchart LR
   P --> D[(PostgreSQL proposals and events)]
   P --> H[Explicit human confirmation]
   H --> R[Separate reservation and preparation]
-  R --> B[Explicit Sandbox buyer checkout]
+  R --> O[Server creates a PayPal Sandbox order]
+  O --> B[Explicit Sandbox buyer checkout]
   B --> V[Server verifies existing PayPal order]
   V --> C[Separate one-time capture claim]
   C --> S[PayPal Sandbox REST]

@@ -52,8 +52,8 @@ not a promise. Rows describing entrant attestations are not claims about the use
 
 | Requirement / rule section | Evidence and verified test evidence | Status | Missing / recommended fix | Severity; effort |
 | --- | --- | --- | --- | --- |
-| PayPal Sandbox + AI centrality (§4) | E1–E6, 183 offline tests; historical capture evidence and real Ollama extraction observed separately | PARTIAL | Rehearse one authorized linked journey; demonstrate the real provider path rather than only mocked results | P0; 4–8h plus approvals |
-| Stable runnable build (§4) | TypeScript, lint, 17 mocked browser tests and webpack production build pass | PARTIAL | Fresh-clone installation and dependency resolution still need verification | P0; 3–5h |
+| PayPal Sandbox + AI centrality (§4) | E1–E6, owner-verified 218 offline-test baseline; historical capture evidence and real Ollama extraction observed separately | PARTIAL | Rehearse one authorized linked journey; demonstrate the real provider path rather than only mocked results | P0; 4–8h plus approvals |
+| Stable runnable build (§4) | Owner-verified 35 mocked-browser-test baseline; TypeScript, lint and webpack checks | PARTIAL | Fresh-clone installation and dependency resolution still need verification | P0; 3–5h |
 | Declared target platform (§4) | Desktop/mobile web routes; mocked responsive browser evidence | PARTIAL | State supported browser/runtime and hardware prerequisites in submission | P0; 0.5h |
 | Working judge access (§4) | Local build exists; setup guide added in this work | PARTIAL | Publish the guide/build after approval and rehearse from a separate checkout; local URLs are not judge hosting | P0; 3–5h |
 | Complete public source (§4) | Anonymous GitHub metadata returned 200, public=true for origin | PARTIAL | Sprint 4–11 code and new documentation remain uncommitted/unpublished | P0; 1–2h after review/approval |
@@ -129,7 +129,7 @@ The following are internal assessments, not official scores.
 | Criterion | Assessment | Strengths | Weaknesses and concrete next step |
 | --- | --- | --- | --- |
 | Technological Implementation | PARTIAL | Non-trivial direct PayPal API client; server verification; durable create/capture claims; uncertainty-aware budget retention; local structured AI | Show one linked Sandbox journey and a clean setup. Keep deterministic authorization outside models; verify account/mapping and recovery compatibility before demonstrating |
-| Design | PARTIAL | Responsive shell, optional-contract composer, stopped-waiting semantics, persisted detail page, accessible labels and empty/error states; 17 mocked browser cases pass | Workflow crosses Agents → Approvals → Payments; older Overview emphasizes payments and has incomplete AI activity/budget context. Prioritize a coherent journey and consistent labels before broad redesign |
+| Design | PARTIAL | Responsive shell, optional-contract composer, stopped-waiting semantics, persisted detail page, accessible labels and empty/error states; owner-verified 35 mocked-browser-case baseline | Workflow crosses Agents → Approvals → Payments; older Overview emphasizes payments and has incomplete AI activity/budget context. Prioritize a coherent journey and consistent labels before broad redesign |
 | Potential Impact | PARTIAL | Bounded AI purchasing addresses a credible authorization-risk problem | Audience, interview evidence and measured outcomes absent. Pick a specific operations/procurement user; show a blocked out-of-policy request and explain the prevented failure without inventing savings |
 | Innovation / Idea | PARTIAL | Separating untrusted extraction, policy, human confirmation, provider evidence and unknown-state recovery is a useful differentiator | No comparative product evidence or actual shopping discovery. Explain this boundary architecture rather than claiming world-first autonomy |
 | Presentation | PARTIAL; submission artifacts incomplete | Existing working AI result, traceable states, synthetic screenshots and architecture suitable for a short story | Public video, pitch and frozen judge runbook unverified. Record real operation, label mock/Sandbox boundaries, show the audit and one failure state |
@@ -169,11 +169,11 @@ The following are internal assessments, not official scores.
 
 ## Validation performed and deliberately skipped
 
-- **183 offline Python tests passed**, with socket connection/DNS access blocked
+- **Owner-verified baseline: 218 offline Python tests passed**, with socket connection/DNS access blocked
   in the runner and a dummy database URL. Includes agent adapter/failure route,
   authorization, password/session helpers, registry, reconciliation planner,
   mocked PayPal adapter, launcher migration-head check and local recovery config.
-- **17 mocked frontend tests passed** on the unchanged Sprint 11 implementation;
+- **Owner-verified baseline: 35 mocked frontend tests passed** on the current reviewed implementation;
   API requests were intercepted. TypeScript and full ESLint passed.
 - **Two proxy wrapper tests passed**. Previous Sprint 4 real-transport results are
   historical evidence; actual 330-second expiry/load testing was not rerun here.
@@ -223,10 +223,11 @@ Sprint 11 snapshot; current-source checks were refreshed afterward. Setup files
 added here improve packaging but do not establish a completed clean-clone install
 or update the public repository without a separately approved publish.
 
-Refreshed validation after those concurrent edits also passed: 17 mocked browser
-cases, TypeScript, ESLint, two proxy tests and production webpack build. A frontend
-source fingerprint was unchanged across that validation window. Prior sprint
-source, payment behavior, financial records and service processes were preserved.
+Historical refreshed validation after those concurrent edits reported 35 mocked
+browser cases, TypeScript, ESLint, two proxy tests and production webpack build.
+A frontend source fingerprint was unchanged across that validation window. Prior
+sprint source, payment behavior, financial records and service processes were
+preserved.
 
 ## Sprint 13 release gates
 

@@ -21,6 +21,7 @@ def _trusted_origins() -> set[str]:
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 logger = logging.getLogger(__name__)
 CORRELATION_HEADER = "X-Intentra-Correlation-ID"
+LEGACY_CORRELATION_HEADER = "X-Correlation-ID"
 
 
 def _correlation_id(value: str | None) -> str:
@@ -34,7 +35,12 @@ def _correlation_id(value: str | None) -> str:
 
 class OriginProtectionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        correlation_id = _correlation_id(request.headers.get(CORRELATION_HEADER))
+        # Prefer the namespaced header used by payment routes, while preserving
+        # the proposal endpoint's established client correlation contract.
+        legacy_correlation_id = request.headers.get(LEGACY_CORRELATION_HEADER)
+        correlation_id = _correlation_id(
+            request.headers.get(CORRELATION_HEADER) or legacy_correlation_id
+        )
         request.state.correlation_id = correlation_id
         if request.method not in SAFE_METHODS:
             origin = request.headers.get("origin")
@@ -68,4 +74,6 @@ class OriginProtectionMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
         response.headers[CORRELATION_HEADER] = correlation_id
+        if legacy_correlation_id is not None:
+            response.headers[LEGACY_CORRELATION_HEADER] = correlation_id
         return response

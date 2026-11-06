@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "INTENTRA: API offline safety checks",
+      "type": "shell",
+      "command": "./.venv/bin/python scripts/offline_checks.py",
+      "options": { "cwd": "${workspaceFolder}/apps/api" },
+      "problemMatcher": []
+    },
+    {
+      "label": "INTENTRA: Web typecheck and lint",
+      "type": "shell",
+      "command": "npx --no-install tsc --noEmit --incremental false && npx --no-install eslint .",
+      "options": { "cwd": "${workspaceFolder}/apps/web" },
+      "problemMatcher": ["$tsc", "$eslint-stylish"]
+    },
+    {
+      "label": "INTENTRA: Web offline proxy tests",
+      "type": "shell",
+      "command": "node --test tests/proxy-offline.test.cjs",
+      "options": { "cwd": "${workspaceFolder}/apps/web" },
+      "problemMatcher": [],
+      "detail": "Uses mocked/isolated proxy checks only; it does not start the application or contact PayPal."
+    },
+    {
+      "label": "INTENTRA: Web production build (isolated output)",
+      "type": "shell",
+      "command": "INTENTRA_NEXT_DIST_DIR=.next-build-check npm run build -- --webpack",
+      "options": { "cwd": "${workspaceFolder}/apps/web" },
+      "problemMatcher": [],
+      "detail": "Builds to an isolated Next output directory. Review generated files before retaining them."
+    },
+    {
+      "label": "INTENTRA: Mocked browser regression (existing frontend)",
+      "type": "shell",
+      "command": "npx --no-install playwright test --config playwright.agents.config.ts",
+      "options": { "cwd": "${workspaceFolder}/apps/web" },
+      "problemMatcher": [],
+      "detail": "Requires the already-running local frontend on 127.0.0.1:3000; this task never starts services and intercepts API requests."
+    }
+  ]
+}

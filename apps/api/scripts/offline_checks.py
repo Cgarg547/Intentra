@@ -15,6 +15,7 @@ import sys
 API_ROOT = Path(__file__).resolve().parents[1]
 TESTS = (
     "tests/test_agent_provider.py",
+    "tests/test_agent_labeled_purchase.py",
     "tests/test_agent_failure_offline.py",
     "tests/test_integration_db_guard.py",
     "tests/test_auth_security.py",

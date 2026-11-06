@@ -189,9 +189,10 @@ pretend an edited/mock result is live execution.
 - No major redesign, new financial API behavior, discovery stub or decorative
   sponsor integration. Sprint 4–11 changes remain intact.
 
-Current test evidence: 183 selected offline Python cases, 17 mocked browser cases,
-TypeScript, full ESLint, two proxy wrapper cases and a production webpack build
-passed in this session. Stateful database suites were intentionally not run.
+Owner-verified Mac Terminal baseline: 218 selected offline Python cases and 35
+mocked browser cases. TypeScript, full ESLint, two proxy wrapper cases and a
+production webpack build were also reported in that baseline. Stateful database
+suites were intentionally not run.
 See readiness audit for the distinction between present tests, observed historical
 records and fresh live verification. Clean installation, sponsor SDK compatibility,
 account entitlements, a complete linked Sandbox journey and submission upload
@@ -205,10 +206,11 @@ Apache-2.0. Verify the exact installed/redistributed model artifact and notices;
 these upstream labels do not choose INTENTRA's own license or license SaaS APIs.
 
 After concurrent frontend edits appeared, a source hash snapshot remained stable
-through refreshed checks: 17 mocked browser tests, TypeScript, full ESLint, two
+through historical refreshed checks: 35 mocked browser tests, TypeScript, full ESLint, two
 proxy tests and the production webpack build passed. These checks used no live
-proposal/model/payment API. The local offline runner independently passed all
-183 reviewed Python cases with connection and DNS access blocked. Build-generated
+proposal/model/payment API. In the historical audit, the local offline runner
+independently passed 183 reviewed Python cases with connection and DNS access
+blocked. Build-generated
 include paths were removed without changing earlier sprint configuration.
 
 Workstream A update: Apache-2.0 is now adopted locally for INTENTRA's original
