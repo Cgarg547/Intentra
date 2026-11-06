@@ -93,17 +93,17 @@ export async function getAgentProposal(id: string, signal?: AbortSignal) {
 }
 
 export function evaluateAgentProposal(id: string) {
-  return request<AgentProposal>(`/api/agents/proposals/${id}/evaluate`, { method: "POST" });
+  return request<unknown>(`/api/agents/proposals/${encodeURIComponent(id)}/evaluate`, { method: "POST" }).then(proposalPayload);
 }
 
 export function confirmAgentProposal(id: string) {
-  return request<AgentProposal>(`/api/agents/proposals/${id}/confirm`, { method: "POST" });
+  return request<unknown>(`/api/agents/proposals/${encodeURIComponent(id)}/confirm`, { method: "POST" }).then(proposalPayload);
 }
 
 export function rejectAgentProposal(id: string, reason?: string) {
-  return request<AgentProposal>(`/api/agents/proposals/${id}/reject`, { method: "POST", body: JSON.stringify({ reason }) });
+  return request<unknown>(`/api/agents/proposals/${encodeURIComponent(id)}/reject`, { method: "POST", body: JSON.stringify({ reason }) }).then(proposalPayload);
 }
 
 export function prepareAgentProposalPayment(id: string) {
-  return request<AgentProposal>(`/api/agents/proposals/${id}/prepare-payment`, { method: "POST" });
+  return request<unknown>(`/api/agents/proposals/${encodeURIComponent(id)}/prepare-payment`, { method: "POST" }).then(proposalPayload);
 }

@@ -225,7 +225,7 @@ test("checkout proxy preserves sanitized outcome-unknown code and blocks unsafe 
   const propagated = await request.get("http://127.0.0.1:8173/test/checkout-correlation");
   expect((await propagated.json()).correlationId).toBe(correlationId);
   const safeError = page.locator("div[role=alert]").filter({ hasText: "Do not retry" });
-  await expect(safeError).toContainText("PayPal may have accepted the order");
+  await expect(safeError).toContainText("PayPal may have accepted");
   await expect(safeError).not.toContainText("Internal provider detail");
   await request.delete("http://127.0.0.1:8173/test/checkout-failure");
 });

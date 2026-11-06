@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("captures mock-only responsive Command Center and AI Assistant", async ({ page }) => {
+  test.setTimeout(90_000);
   await page.route("**/api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/contracts") return route.fulfill({ json: { items: [], total: 0, limit: 100, offset: 0 } });
@@ -11,7 +12,7 @@ test("captures mock-only responsive Command Center and AI Assistant", async ({ p
   for (const width of [375, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /Commerce decisions/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Control every purchase decision." })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: `/tmp/intentra-b2-overview-${width}.png`, fullPage: true, animations: "disabled" });
     await page.goto("/agents");

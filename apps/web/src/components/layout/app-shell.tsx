@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, ShieldCheck, X } from "lucide-react";
+import { Bell, Menu, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { navigation } from "@/lib/navigation";
 import { ThemeSelector } from "./theme-selector";
+import { SessionMenu } from "./session-menu";
+import { SystemStatusIndicator } from "./system-status-indicator";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -45,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-3 focus:text-accent-foreground"
@@ -57,21 +59,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <aside
           id="primary-navigation"
           aria-label="Primary navigation"
-          className={`fixed inset-y-0 left-0 z-40 w-72 overflow-y-auto border-r border-border bg-surface p-5 shadow-2xl shadow-black/5 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ${
+          className={`fixed inset-y-0 left-0 z-40 w-[17.5rem] overflow-y-auto border-r border-border bg-surface p-4 shadow-2xl shadow-black/10 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:shadow-none ${
             menuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-8 flex items-center justify-between px-1 pt-1">
             <Link href="/" className="flex items-center gap-3">
-              <span className="rounded-xl bg-accent p-2 text-accent-foreground shadow-sm">
+              <span className="rounded-xl bg-accent p-2.5 text-accent-foreground shadow-lg shadow-violet-500/20">
                 <ShieldCheck size={24} aria-hidden="true" />
               </span>
               <span>
-                <span className="block text-lg font-extrabold tracking-wide">
+                <span className="block text-lg font-extrabold tracking-[-0.06em]">
                   INTENTRA
                 </span>
-                <span className="block text-xs text-muted">
-                  Financial Intelligence
+                <span className="block text-[11px] font-medium text-muted">
+                  Spend operations
                 </span>
               </span>
             </Link>
@@ -86,15 +88,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav aria-label="Workspace">
-            <p className="mb-3 px-3 text-xs font-bold uppercase tracking-widest text-muted">
+            <p className="mb-3 px-3 text-[10px] font-extrabold uppercase tracking-[0.16em] text-muted">
               Workspace
             </p>
             <div className="space-y-1">{navLinks}</div>
           </nav>
-          <div className="mt-8 rounded-xl border border-border bg-surface-muted p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted">Environment</p>
-            <p className="mt-2 text-sm font-semibold">Sandbox workspace</p>
-            <p className="mt-1 text-xs leading-5 text-muted">No live payment actions are represented here.</p>
+          <div className="app-card mt-8 rounded-2xl border border-violet-200/70 bg-violet-50/70 p-4 dark:border-violet-500/20 dark:bg-violet-500/10">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-accent">Environment</p>
+            <p className="mt-2 text-sm font-bold">Sandbox workspace</p>
+            <p className="mt-1 text-xs leading-5 text-muted">Every payment still requires a person&apos;s explicit approval.</p>
           </div>
         </aside>
 
@@ -108,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-2 border-b border-border bg-background/95 px-4 backdrop-blur sm:min-h-20 sm:gap-3 sm:px-8">
+          <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-2 border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:min-h-[4.75rem] sm:gap-3 sm:px-8">
             <div className="flex items-center gap-3">
               <button
                 type="button"
@@ -121,24 +123,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Menu size={21} aria-hidden="true" />
               </button>
               <div className="min-w-0">
-                <p className="text-sm font-bold"><span className="sm:hidden">INTENTRA</span><span className="hidden sm:inline">INTENTRA Workspace</span></p>
-                <p className="hidden text-xs text-muted sm:block">Human-authorized AI commerce</p>
+                <p className="text-sm font-bold"><span className="sm:hidden">INTENTRA</span><span className="hidden sm:inline">Spend management</span></p>
+                <p className="hidden text-[11px] text-muted sm:block">Human-governed AI purchasing</p>
               </div>
             </div>
-            <ThemeSelector />
+            <div className="flex items-center gap-2">
+              <SystemStatusIndicator />
+              <button type="button" aria-label="Notifications are not configured" title="Notifications are not configured" className="hidden rounded-xl border border-border bg-surface p-2 text-muted sm:inline-flex"><Bell size={17} aria-hidden="true" /></button>
+              <ThemeSelector />
+              <SessionMenu />
+            </div>
           </header>
 
           <main
             id="main-content"
             tabIndex={-1}
-            className="mx-auto w-full max-w-[90rem] flex-1 px-4 py-7 outline-none sm:px-8 sm:py-9"
+            className="mx-auto w-full max-w-[96rem] flex-1 px-4 py-7 outline-none sm:px-8 sm:py-9"
           >
             {children}
           </main>
 
           <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-5 text-xs text-muted sm:px-8">
-            <span>© 2026 INTENTRA. Human Intent. Agent Execution.</span>
-            <span>Accessible by design · Sandbox-first development</span>
+            <span>© 2026 INTENTRA · Human-approved spend operations</span>
+            <span>Sandbox-first · Payment actions are deliberate</span>
           </footer>
         </div>
       </div>

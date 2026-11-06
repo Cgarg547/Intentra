@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const apiBase = () => (process.env.INTENTRA_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+import { internalApiBase } from "@/lib/server/api-base";
 
 export async function GET(request: NextRequest) {
   const attemptId = request.nextUrl.searchParams.get("attempt_id");
@@ -8,9 +7,10 @@ export async function GET(request: NextRequest) {
   const stateCookie = `intentra_checkout_state_${attemptId}`;
   const state = request.cookies.get(stateCookie)?.value;
   let result = "cancelled";
-  if (state && attemptId) {
+  const apiBase = internalApiBase();
+  if (state && attemptId && apiBase) {
     try {
-      const response = await fetch(`${apiBase()}/api/payments/checkout/cancel`, {
+      const response = await fetch(`${apiBase}/api/payments/checkout/cancel`, {
         method: "POST", cache: "no-store",
         headers: { "Content-Type": "application/json", Cookie: request.headers.get("cookie") ?? "", Origin: request.headers.get("origin") ?? request.nextUrl.origin },
         body: JSON.stringify({ attempt_id: attemptId, state }),

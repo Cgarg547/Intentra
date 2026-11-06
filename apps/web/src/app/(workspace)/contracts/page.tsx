@@ -9,11 +9,11 @@ export default function ContractsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <p className="text-xs font-semibold uppercase tracking-widest text-accent">
+        <p className="page-kicker">
           Human-governed financial execution
         </p>
 
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="page-title mt-2 text-3xl text-foreground">
           Intent Contracts
         </h1>
 

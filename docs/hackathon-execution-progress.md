@@ -67,6 +67,15 @@ provider identifiers, buyer data, or private configuration.
     Temporary screenshots remain outside the repository at
     `/tmp/intentra-visual`; no screenshots were fabricated or added as release
     evidence.
+- Prepared the web application for a Vercel/API split without deploying it:
+  Vercel builds now require an explicit server-only HTTPS API rewrite target,
+  and checkout callbacks fail closed rather than falling back to localhost.
+  The accompanying deployment guide documents the matching API origin/CORS
+  variables and preserves the separate API, database and Ollama topology.
+- Freshly re-ran after that change: backend offline runner **227 passed**;
+  frontend TypeScript, ESLint and three offline rewrite-configuration tests
+  passed; and a webpack production build with Vercel-style API variables passed
+  all 19 routes. These checks made no provider request or database connection.
 
 ## Visual QA note
 

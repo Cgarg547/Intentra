@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const apiBase = () => (process.env.INTENTRA_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+import { internalApiBase } from "@/lib/server/api-base";
 
 function finish(request: NextRequest, result: string, stateCookie?: string) {
   const response = NextResponse.redirect(new URL(`/payments?checkout=${result}`, request.nextUrl.origin), 303);
@@ -16,8 +15,10 @@ export async function GET(request: NextRequest) {
   const stateCookie = `intentra_checkout_state_${attemptId}`;
   const state = request.cookies.get(stateCookie)?.value;
   if (!state) return finish(request, "verification-required", stateCookie);
+  const apiBase = internalApiBase();
+  if (!apiBase) return finish(request, "verification-unavailable", stateCookie);
   try {
-    const response = await fetch(`${apiBase()}/api/payments/checkout/return`, {
+    const response = await fetch(`${apiBase}/api/payments/checkout/return`, {
       method: "POST", cache: "no-store",
       headers: { "Content-Type": "application/json", Cookie: request.headers.get("cookie") ?? "", Origin: request.headers.get("origin") ?? request.nextUrl.origin },
       body: JSON.stringify({ attempt_id: attemptId, state }),

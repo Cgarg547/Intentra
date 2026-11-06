@@ -67,3 +67,30 @@ def test_invented_merchant_is_rejected():
         validate_extraction_evidence(REQUEST, extraction)
 
     assert error.value.code == "OPENAI_INVALID_RESPONSE"
+
+
+@pytest.mark.parametrize("input_text", [
+    "The budget is $75 USD.",
+    "The budget is 75 USD.",
+    "The budget is USD 75.",
+    "The budget is USD $75.",
+    "amount: 75\ncurrency: USD",
+])
+def test_explicit_amount_currency_forms_are_grounded(input_text):
+    validate_extraction_evidence(input_text, ExtractedPurchase(amount=Decimal("75"), currency="USD"))
+
+
+@pytest.mark.parametrize("input_text, extraction", [
+    ("The budget is 75. Currency options are USD and CAD.", ExtractedPurchase(amount=Decimal("75"), currency="USD")),
+    ("The budget is $75 USD.", ExtractedPurchase(amount=Decimal("76"), currency="USD")),
+])
+def test_ambiguous_or_unsupported_financial_details_are_rejected(input_text, extraction):
+    with pytest.raises(AgentProviderError) as error:
+        validate_extraction_evidence(input_text, extraction)
+
+    assert error.value.code == "OPENAI_INVALID_RESPONSE"
+
+
+def test_explicit_unsupported_currency_is_left_for_deterministic_policy():
+    """Grounding accepts user text; policy, not the model adapter, denies XYZ."""
+    validate_extraction_evidence("The budget is XYZ 75.", ExtractedPurchase(amount=Decimal("75"), currency="XYZ"))

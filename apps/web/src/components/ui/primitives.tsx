@@ -10,13 +10,13 @@ const badgeTone: Record<Tone, string> = {
 };
 
 export function Badge({ children, tone = "neutral", className = "" }: { children: ReactNode; tone?: Tone; className?: string }) {
-  return <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeTone[tone]} ${className}`}>{children}</span>;
+  return <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold tracking-[0.02em] ${badgeTone[tone]} ${className}`}>{children}</span>;
 }
 
 export function Card({ children, className = "", ...props }: ComponentProps<"section">) {
-  return <section className={`rounded-2xl border border-border bg-surface ${className}`} {...props}>{children}</section>;
+  return <section className={`app-card rounded-2xl border border-border bg-surface ${className}`} {...props}>{children}</section>;
 }
 
 export function EmptyState({ title, children }: { title: string; children: ReactNode }) {
-  return <div className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center"><h3 className="font-semibold">{title}</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">{children}</p></div>;
+  return <div className="rounded-2xl border border-dashed border-border bg-surface-muted/50 p-8 text-center"><h3 className="font-semibold">{title}</h3><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">{children}</p></div>;
 }

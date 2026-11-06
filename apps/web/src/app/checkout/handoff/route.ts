@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-
-const apiBase = () => (process.env.INTENTRA_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+import { internalApiBase } from "@/lib/server/api-base";
 
 const checkoutMessages: Record<string, string> = {
   AUTHENTICATION_REQUIRED: "Your session is not available. Sign in, then review payment history before continuing.",
@@ -45,9 +44,13 @@ export async function POST(request: NextRequest) {
   if (typeof input !== "object" || input === null || !("reservation_id" in input) || typeof input.reservation_id !== "string") {
     return failure(400, "CHECKOUT_REQUEST_INVALID", "Checkout request is invalid.", correlationId);
   }
+  const apiBase = internalApiBase();
+  if (!apiBase) {
+    return failure(503, "CHECKOUT_CONFIGURATION_INVALID", checkoutMessages.CHECKOUT_CONFIGURATION_INVALID, correlationId);
+  }
   let providerResponse: Response;
   try {
-    providerResponse = await fetch(`${apiBase()}/api/payments/reservations/${encodeURIComponent(input.reservation_id)}/checkout`, {
+    providerResponse = await fetch(`${apiBase}/api/payments/reservations/${encodeURIComponent(input.reservation_id)}/checkout`, {
       method: "POST", cache: "no-store",
       headers: {
         "Content-Type": "application/json",

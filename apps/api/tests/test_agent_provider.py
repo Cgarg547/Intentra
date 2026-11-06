@@ -281,6 +281,35 @@ async def test_ollama_extracts_schema_constrained_purchase_without_external_rout
 
 
 @pytest.mark.asyncio
+async def test_ollama_accepts_explicit_budget_and_unselected_merchant_with_mocked_response():
+    request_text = (
+        "The budget is $75 USD. I want a wireless keyboard for office use. "
+        "I have not selected a merchant. Prepare a proposal for human review only."
+    )
+
+    async def ollama(request):
+        body = json.loads(request.content)
+        instruction = body["messages"][0]["content"]
+        assert "$75 USD" in instruction
+        assert "unspecified merchant is null" in instruction
+        return httpx.Response(200, json={"message": {"content": json.dumps({
+            "purpose": "wireless keyboard for office use",
+            "merchant_id": None,
+            "amount": "75",
+            "currency": "USD",
+        })}})
+
+    provider = OllamaPurchasePlanningProvider(
+        base_url="http://127.0.0.1:11434", model="qwen3:4b", transport=httpx.MockTransport(ollama))
+    result = await provider.extract(request_text)
+
+    assert result.purpose == "wireless keyboard for office use"
+    assert result.merchant_id is None
+    assert result.amount == Decimal("75")
+    assert result.currency == "USD"
+
+
+@pytest.mark.asyncio
 async def test_ollama_diagnostics_are_structured_and_redact_model_content(caplog):
     secret = "do-not-log-model-output-or-user-data"
 

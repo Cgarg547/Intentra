@@ -62,3 +62,21 @@ test('configured rewrite deadline accommodates maximum Ollama deadline and forwa
   assert.ok(options.proxyTimeout > 300_000, 'proxy must outlast the maximum 300s provider deadline');
   assert.equal(res.statusCode, 503);
 });
+
+test('Vercel build refuses a missing API rewrite target', () => {
+  const source = readFileSync(require.resolve('../next.config.ts'), 'utf8');
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } });
+  const savedVercel = process.env.VERCEL;
+  const savedTarget = process.env.INTENTRA_API_PROXY_TARGET;
+  try {
+    process.env.VERCEL = '1';
+    delete process.env.INTENTRA_API_PROXY_TARGET;
+    const configModule = { exports: {} };
+    assert.throws(() => new Function('module', 'exports', 'require', compiled.outputText)(configModule, configModule.exports, require), /INTENTRA_API_PROXY_TARGET is required/);
+  } finally {
+    if (savedVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = savedVercel;
+    if (savedTarget === undefined) delete process.env.INTENTRA_API_PROXY_TARGET;
+    else process.env.INTENTRA_API_PROXY_TARGET = savedTarget;
+  }
+});

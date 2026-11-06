@@ -147,9 +147,11 @@ copy cookies between tools. `/agents` and `/agents/{proposal_id}` show the saved
 workspace; `/status` calls the authenticated read-only workspace status endpoint.
 The unauthenticated API `GET /health` checks process health, not database readiness.
 
-The frontend rewrite currently targets `http://127.0.0.1:8000/api/...` and has a
-330-second proxy inactivity timeout. It is a local topology, not cloud-ready
-service discovery. A hosted frontend cannot reach the developer laptop's loopback.
+The frontend rewrite defaults to `http://127.0.0.1:8000/api/...` only for local
+development and has a 330-second proxy inactivity timeout. For Vercel, both
+server-only API target variables are required and must point to a separately
+deployed HTTPS API; see [Vercel deployment preparation](docs/vercel-deployment-preparation.md).
+A hosted frontend cannot reach the developer laptop's loopback or local Ollama.
 
 For **separately approved** Ollama activation, provide these variables to a newly
 started backend process; do not restart an existing backend without permission:

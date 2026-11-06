@@ -104,3 +104,32 @@ test("failed payment preparation stays visible after proposal refresh", async ({
     method: "POST",
   }]);
 });
+
+test("saved proposal detail performs explicit preparation without opening checkout", async ({ page }) => {
+  let prepareCalls = 0;
+  const proposal = {
+    proposal_id: proposalId, owner_id: "owner", request: "Buy a keyboard for USD 20.00",
+    requested_purpose: "replacement keyboard", merchant_id: "office_store", proposed_amount: "20.00", currency: "USD",
+    contract_id: contractId, contract_version: 2, explanation: "Candidate details extracted.", missing_information: [],
+    policy_decision: "ALLOW", policy_reason: "Within approved contract and current budget.", status: "CONFIRMED",
+    provider_mode: "SIMULATED", version: 3, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    payment_preparation: null, events: [],
+  };
+  await page.route("**/api/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === `/api/agents/proposals/${proposalId}` && route.request().method() === "GET") return route.fulfill({ json: proposal });
+    if (path === `/api/agents/proposals/${proposalId}/prepare-payment` && route.request().method() === "POST") {
+      prepareCalls += 1;
+      return route.fulfill({ json: { ...proposal, payment_preparation: { reservation_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", attempt_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", contract_version: 2, created_at: new Date().toISOString(), status: "EXECUTION_PENDING" } } });
+    }
+    return route.fulfill({ status: 404, json: { detail: "Mock API route not found" } });
+  });
+
+  await page.goto(`/agents/${proposalId}`);
+  await expect(page.getByRole("button", { name: "Prepare payment" })).toBeVisible();
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "Prepare payment" }).click();
+  await expect(page.getByText("Payment prepared and budget reserved. No PayPal order or buyer approval was created.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue to PayPal Sandbox" })).toBeVisible();
+  expect(prepareCalls).toBe(1);
+});

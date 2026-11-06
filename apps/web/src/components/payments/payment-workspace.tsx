@@ -115,7 +115,11 @@ export function PaymentWorkspace() {
     try {
       const result = await capturePayment(attempt.attempt_id);
       setNotice(`Capture result: ${result.state}. ${result.action}`);
-      await refresh(); await inspect(attempt.attempt_id);
+      // Show the confirmed local result immediately. Refreshing history is
+      // useful, but must not hide a definitive response behind a slow view
+      // refresh or make the operator wonder whether capture was submitted.
+      void refresh().catch(() => undefined);
+      void inspect(attempt.attempt_id);
     } catch (err) { setError(err instanceof Error ? err.message : "Capture state is uncertain. Reconcile before any retry."); }
     finally { setWorking(false); }
   }
@@ -125,7 +129,8 @@ export function PaymentWorkspace() {
     try {
       const result = await reconcilePayment(attempt.attempt_id);
       setNotice(`Reconciliation: ${result.action}${result.provider_status ? ` · provider ${result.provider_status}` : ""}`);
-      await refresh(); await inspect(attempt.attempt_id);
+      void refresh().catch(() => undefined);
+      void inspect(attempt.attempt_id);
     } catch (err) { setError(err instanceof Error ? err.message : "Reconciliation is unavailable. The current reservation remains held."); }
     finally { setWorking(false); }
   }
@@ -134,7 +139,7 @@ export function PaymentWorkspace() {
     {(checkoutResult === "verified" || checkoutResult === "cancelled" || checkoutResult === "cancel-review" || checkoutResult?.startsWith("verification")) && <div role="status" className="rounded-xl border border-border bg-surface p-4 text-sm">{checkoutResult === "verified" ? "PayPal buyer approval was verified by INTENTRA. No payment was captured; review the attempt below and choose Capture when ready." : checkoutResult === "cancelled" ? "Checkout was cancelled. The payment reservation remains available for review." : checkoutResult === "cancel-review" ? "Checkout could not be safely marked cancelled. Review the payment state before retrying." : "PayPal returned to INTENTRA, but approval could not be verified. Review the payment before taking another action."}</div>}
     {notice && <div role="status" className="rounded-xl border border-border bg-surface p-4 text-sm">{notice}</div>}
     {error && <div role="alert" className="rounded-xl border border-red-500/40 bg-surface p-4 text-sm text-red-600">{error} <Link href="/account" className="underline">Check sign-in</Link></div>}
-    <section className="rounded-2xl border border-border bg-surface p-6">
+    <section className="app-card rounded-3xl border border-border bg-surface p-6">
       <h2 className="text-xl font-semibold">Evaluate and reserve a payment</h2>
       <p className="mt-1 max-w-3xl text-sm leading-6 text-muted">INTENTRA checks the proposal against a human-approved contract. Evaluation does not move money. A separate reservation holds budget before checkout.</p>
       {loading ? <div role="status" className="mt-5 h-28 animate-pulse rounded-xl bg-surface-muted" /> : <div className="mt-5 grid gap-4 sm:grid-cols-2">

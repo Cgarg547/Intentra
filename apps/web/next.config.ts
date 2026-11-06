@@ -1,5 +1,13 @@
 import type { NextConfig } from "next";
 
+const localApiProxy = "http://127.0.0.1:8000";
+const apiProxyTarget = process.env.INTENTRA_API_PROXY_TARGET
+  ?? (process.env.VERCEL ? undefined : localApiProxy);
+
+if (!apiProxyTarget) {
+  throw new Error("INTENTRA_API_PROXY_TARGET is required for Vercel builds; it must point to the HTTPS API deployment.");
+}
+
 const nextConfig: NextConfig = {
   distDir: process.env.INTENTRA_NEXT_DIST_DIR ?? ".next",
   devIndicators: false,
@@ -14,7 +22,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: `${process.env.INTENTRA_API_PROXY_TARGET ?? "http://127.0.0.1:8000"}/api/:path*`,
+        destination: `${apiProxyTarget.replace(/\/$/, "")}/api/:path*`,
       },
     ];
   },

@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# INTENTRA web workspace
 
-## Getting Started
+This is the Next.js App Router frontend for INTENTRA's human-governed purchasing
+workflow. It provides authenticated contracts, AI purchase proposals, approval
+review, payment history, audit records, and safe PayPal Sandbox checkout return
+handling. The UI never treats a browser redirect as proof of payment success.
 
-First, run the development server:
+## Local development
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Install dependencies once:
+
+```sh
+npm ci
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Start the frontend only on an unused local port. The default development API
+proxy is `http://127.0.0.1:8000`; use the same browser hostname as the API
+session and checkout callback configuration.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```sh
+npm run dev -- --hostname 127.0.0.1 --port 3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For the complete safe local API setup, mock-mode configuration, and provider
+boundaries, read the repository [README](../../README.md).
 
-## Learn More
+## Verification
 
-To learn more about Next.js, take a look at the following resources:
+These checks do not contact Ollama or PayPal:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```sh
+npx --no-install tsc --noEmit --incremental false
+npx --no-install eslint .
+node --test tests/proxy-offline.test.cjs
+INTENTRA_NEXT_DIST_DIR=.next-build-check npm run build -- --webpack
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The mocked Playwright suite requires a separately running local frontend. Every
+API request is intercepted before it can reach the development proxy:
 
-## Deploy on Vercel
+```sh
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 \
+  npx --no-install playwright test --config playwright.agents.config.ts
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy this directory (`apps/web`) as the Vercel project root. Vercel hosts only
+the frontend; the FastAPI service, PostgreSQL, and any Ollama inference runtime
+must be separately deployed and privately configured. Set server-only
+`INTENTRA_API_PROXY_TARGET` and `INTENTRA_API_URL` to the HTTPS API origin.
+Do not prefix either variable with `NEXT_PUBLIC_`.
+
+See [the deployment preparation guide](../../docs/vercel-deployment-preparation.md)
+before configuring hosting, origins, secrets, migrations, or a deployment.
