@@ -601,6 +601,32 @@ async def test_paypal_invalid_order_response_is_rejected():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("unsafe_order_id", [" ORDER-123", "ORDER-123 ", "ORDER/123", "ORDER?123", "ORDER#123", "ORDER\n123"])
+async def test_paypal_create_rejects_unsafe_provider_order_id(unsafe_order_id):
+    """A 2xx response must not bind an ID that later cannot be safely retrieved."""
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(200, json={"access_token": "mock-token"})
+        return httpx.Response(201, json={
+            "id": unsafe_order_id,
+            "status": "CREATED",
+            "purchase_units": [{
+                "payee": {"merchant_id": "TEST_MERCHANT"},
+                "amount": {"currency_code": "USD", "value": "40.00"},
+            }],
+        })
+
+    paypal, http = make_client(handler)
+    async with http:
+        with pytest.raises(PayPalOrderOutcomeUnknownError, match="outcome unknown"):
+            await paypal.create_order(
+                amount=Decimal("40.00"), currency="USD",
+                provider_idempotency_key="intentra-unsafe-order-id",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+            )
+
+
+@pytest.mark.asyncio
 async def test_paypal_order_server_error_is_uncertain():
     def handler(request):
         if request.url.path == "/v1/oauth2/token":

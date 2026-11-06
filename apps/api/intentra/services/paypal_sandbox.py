@@ -11,6 +11,20 @@ SANDBOX_BASE_URL = "https://api-m.sandbox.paypal.com"
 PAYPAL_HTTP_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
 
 
+def _valid_paypal_order_id(order_id: object) -> bool:
+    """Accept only IDs that are safe to persist and later place in an order URL."""
+    return (
+        isinstance(order_id, str)
+        and bool(order_id.strip())
+        and order_id == order_id.strip()
+        and len(order_id) <= 128
+        and "/" not in order_id
+        and "?" not in order_id
+        and "#" not in order_id
+        and all(ord(character) >= 32 and ord(character) != 127 for character in order_id)
+    )
+
+
 class PayPalSandboxError(Exception):
     pass
 
@@ -60,8 +74,7 @@ def validate_paypal_order(
     """Verify the identity and authorized payment details of an order."""
     if (
         not isinstance(data, dict)
-        or not isinstance(data.get("id"), str)
-        or not data["id"].strip()
+        or not _valid_paypal_order_id(data.get("id"))
         or (order_id is not None and data["id"] != order_id)
     ):
         raise PayPalSandboxError("PayPal returned an invalid order.")
@@ -360,15 +373,7 @@ class PayPalSandboxClient:
         Does not create an order, capture payment, or
         establish that a payment was completed.
         """
-        if (
-            not isinstance(order_id, str)
-            or not order_id.strip()
-            or order_id != order_id.strip()
-            or len(order_id) > 128
-            or "/" in order_id
-            or "?" in order_id
-            or "#" in order_id
-        ):
+        if not _valid_paypal_order_id(order_id):
             raise PayPalSandboxError("Invalid PayPal order ID.")
 
         if (
