@@ -4,6 +4,7 @@ from intentra.services.auth import (
     generate_session_token,
     hash_password,
     hash_session_token,
+    session_cookie_requires_https,
     session_expiry,
     verify_password,
 )
@@ -44,3 +45,24 @@ def test_session_expires_in_future():
 
     assert expiry.tzinfo is not None
     assert expiry > datetime.now(timezone.utc)
+
+
+def test_session_cookie_is_secure_for_vercel(monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("INTENTRA_FRONTEND_URL", "http://localhost:3000")
+
+    assert session_cookie_requires_https() is True
+
+
+def test_session_cookie_is_secure_for_https_frontend(monkeypatch):
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.setenv("INTENTRA_FRONTEND_URL", "https://intentra-web.vercel.app")
+
+    assert session_cookie_requires_https() is True
+
+
+def test_session_cookie_allows_local_http(monkeypatch):
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.setenv("INTENTRA_FRONTEND_URL", "http://localhost:3000")
+
+    assert session_cookie_requires_https() is False

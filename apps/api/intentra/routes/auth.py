@@ -15,6 +15,7 @@ from intentra.services.auth import (
     generate_session_token,
     hash_password,
     hash_session_token,
+    session_cookie_requires_https,
     session_expiry,
     verify_password,
 )
@@ -23,7 +24,6 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 COOKIE_NAME = "intentra_session"
 logger = logging.getLogger(__name__)
-
 
 class Credentials(BaseModel):
     email: EmailStr
@@ -96,7 +96,7 @@ async def create_session(
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=False,  # Local HTTP development only
+        secure=session_cookie_requires_https(),
         samesite="lax",
         max_age=8 * 60 * 60,
         path="/",
