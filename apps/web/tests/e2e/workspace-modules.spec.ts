@@ -106,7 +106,10 @@ test("audit filters clear details for an event outside the current results", asy
   await page.goto("/audit");
   await page.getByRole("button", { name: "FIRST_EVENT" }).click();
   await expect(page.getByText('"marker": "first"')).toBeVisible();
-  await page.getByLabel("Event type").fill("SECOND_EVENT");
+  await page.getByRole("textbox", {
+    name: "Event type",
+    exact: true,
+  }).fill("SECOND_EVENT");
   await expect(page.getByRole("button", { name: "SECOND_EVENT" })).toBeVisible();
   await expect(page.getByText("Select an event to inspect its recorded evidence.")).toBeVisible();
   await expect(page.getByText('"marker": "first"')).toHaveCount(0);
