@@ -181,6 +181,7 @@ export function AgentWorkspace() {
   }
 
   const eligibleContracts = contracts.filter((contract) => contract.status === "APPROVED");
+  const latestProposal = latestId ? proposals.find((proposal) => proposal.proposal_id === latestId) ?? null : null;
   return (
     <div className="space-y-7">
       <section aria-labelledby="request-heading" className="overflow-hidden rounded-2xl border border-border bg-surface">
@@ -206,6 +207,17 @@ export function AgentWorkspace() {
       {error && <div role="alert" className="rounded-xl border border-red-500/50 bg-surface p-4 text-sm">{error}{!authenticated && <Link href="/account" className="ml-2 font-semibold text-accent underline">Sign in</Link>}</div>}
       {uncertainKey && <section aria-label="Interrupted request" className="rounded-xl border border-accent/40 bg-surface p-5"><h2 className="text-sm font-semibold">Check saved history before starting again</h2><p className="mt-2 text-sm leading-6 text-muted">An interrupted request may still have created a proposal. No automatic retry was sent. Refresh history to inspect the result; starting again could create a duplicate.</p><p className="mt-2 break-all font-mono text-xs text-muted">Submission reference: {uncertainKey}</p><button type="button" disabled={!historyReviewed || loading || busy} onClick={() => { setUncertainKey(null); setError(""); setHistoryReviewed(false); }} className="mt-4 rounded-lg border border-border px-3 py-2 text-sm disabled:opacity-50">I reviewed history — start a new request</button></section>}
       <div aria-live="polite" aria-atomic="true">{notice && <p className="rounded-xl border border-accent/40 bg-surface p-4 text-sm">{notice}{latestId && <a href={`#proposal-${latestId}`} className="ml-2 font-semibold text-accent underline">View result</a>}</p>}</div>
+      {latestProposal && <section aria-label="New proposal result" className="rounded-2xl border border-accent/40 bg-surface p-5 sm:p-6">
+        <p className="text-xs font-semibold uppercase tracking-widest text-accent">Proposal created</p>
+        <h2 className="mt-2 text-xl font-semibold">{latestProposal.status === "READY_FOR_REVIEW" && latestProposal.policy_decision === "ALLOW" ? "Ready for human approval" : "More information is needed"}</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{latestProposal.status === "READY_FOR_REVIEW" && latestProposal.policy_decision === "ALLOW"
+          ? "A person must still review and explicitly confirm this proposal. Creating it did not reserve funds or initiate payment."
+          : "Review the saved policy result to see which purchase details need clarification. Creating it did not reserve funds or initiate payment."}</p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href={`/agents/${latestProposal.proposal_id}`} prefetch={false} className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground">Review saved proposal</Link>
+          {latestProposal.status === "READY_FOR_REVIEW" && latestProposal.policy_decision === "ALLOW" && <Link href="/approvals" className="rounded-lg border border-border px-4 py-2 text-sm font-semibold">Open Approval Center</Link>}
+        </div>
+      </section>}
       <section aria-labelledby="proposal-history-heading" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-accent">02 / Saved results</p><h2 id="proposal-history-heading" className="mt-2 text-xl font-semibold">Proposal history</h2><p className="mt-1 text-sm text-muted">Your latest saved proposals, including requests that need more information.</p></div><button type="button" onClick={() => void refresh()} disabled={loading || busy} className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm disabled:opacity-50"><RefreshCw size={15} aria-hidden="true" />Refresh</button></div>
         {historyError && <p role="alert" className="rounded-xl border border-border bg-surface p-4 text-sm">{historyError}{!authenticated && <Link href="/account" className="ml-2 font-semibold text-accent underline">Sign in to view proposals</Link>}</p>}

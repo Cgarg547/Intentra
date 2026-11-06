@@ -82,6 +82,10 @@ test("201 maps proposal_id, renders OLLAMA NEEDS_INFORMATION, and permits no con
   await expect(card.getByText("Select an approved contract and provide purchase details.", { exact: true })).toBeVisible();
   await expect(card.getByRole("list", { name: "Missing information" })).toContainText("approved contract");
   await expect(card.getByRole("link", { name: /View saved proposal/ })).toHaveAttribute("href", `/agents/${proposalId}`);
+  const result = page.getByRole("region", { name: "New proposal result" });
+  await expect(result.getByRole("heading", { name: "More information is needed" })).toBeVisible();
+  await expect(result).toContainText("Creating it did not reserve funds or initiate payment.");
+  await expect(result.getByRole("link", { name: "Review saved proposal" })).toHaveAttribute("href", `/agents/${proposalId}`);
   await expect(page.getByText("Payment prepared", { exact: true })).toHaveCount(0);
   expect(api.posts).toHaveLength(1);
   expect(api.posts[0].body).toEqual({ request: prompt, contract_id: null });

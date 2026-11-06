@@ -10,7 +10,7 @@ export default defineConfig({
   reporter: "list",
   outputDir: "/tmp/intentra-sprint11-playwright",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
     ...devices["Desktop Chrome"],
     channel: "chrome",
     serviceWorkers: "block",
