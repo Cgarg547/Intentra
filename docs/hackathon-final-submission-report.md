@@ -132,11 +132,12 @@ security tests passed **158** cases in 1.05 seconds.
 ## Controlled Sandbox rehearsal status
 
 The approved USD 0.01 local synthetic contract exists only in a newly created,
-isolated local PostgreSQL database on loopback port 5434; it is not a Neon or
-production target. The merchant is `paypal_merchant_demo` and is mapped in the
+isolated local PostgreSQL database on loopback port 55433; it is not a Neon or
+production target. The merchant is `office_store` and is mapped in the
 ignored `0600` local configuration to the supplied Sandbox business Account ID.
 The launcher requires an explicit opt-in and exact local database identity for
-this disposable target.
+this disposable target. Its stale prior identity was corrected to the verified
+`127.0.0.1:55433/intentra_sandbox` target.
 
 The read-only Sandbox OAuth preflight reached `api-m.sandbox.paypal.com` and
 received HTTP 401. No token or provider error body was retained. This means the

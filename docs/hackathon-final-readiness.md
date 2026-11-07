@@ -210,7 +210,7 @@ passed: **158 passed**. This is not live provider evidence.
 ### Controlled Sandbox rehearsal preflight — 2026-11-07
 
 An isolated, disposable PostgreSQL 17 database was created locally on loopback
-`127.0.0.1:5434` as `intentra_sandbox_demo`; it is not Neon Preview or
+`127.0.0.1:55433` as `intentra_sandbox`; it is not Neon Preview or
 Production. Only that database was migrated to Alembic head
 `9d7f1a4c6b20`. The Sandbox launcher now requires an explicit
 `INTENTRA_ALLOW_DISPOSABLE_SANDBOX_DATABASE=1` opt-in and accepts only that
@@ -219,7 +219,7 @@ database allowlist. This prevents an accidental hosted or arbitrary database
 target.
 
 The synthetic owner created and explicitly approved exactly one local contract
-for `paypal_merchant_demo`, USD `0.01`. The private owner-only configuration
+for `office_store`, USD `0.01`. The private owner-only configuration
 maps that internal merchant to the supplied 13-character Sandbox business ID
 without exposing its credentials. Configuration JSON, ignored-file coverage,
 and `0600` permissions passed.
@@ -230,8 +230,10 @@ recorded. Therefore the entered credentials have **not** been verified as the
 INTENTRA Sandbox REST app. No PayPal order, buyer approval, capture,
 reconciliation, or provider-side payment artifact was created. The buyer is
 not verified because no safe interactive approval session can begin until OAuth
-succeeds. Focused offline Sandbox safety tests, including the disposable DB
-allowlist test, passed: **88 passed**.
+succeeds. The allowlist was corrected from a stale local target to this exact
+loopback database identity and remains explicitly opt-in. Focused offline
+Sandbox safety tests, including the disposable DB allowlist test, passed:
+**88 passed**.
 
 ## Official submission requirements checked
 

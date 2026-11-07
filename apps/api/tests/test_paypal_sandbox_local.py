@@ -16,8 +16,8 @@ def test_local_launcher_revision_matches_the_single_alembic_head():
 
 def test_disposable_sandbox_database_requires_explicit_opt_in(monkeypatch):
     url = (
-        "postgresql+asyncpg://intentra_sandbox_runner:local-password@"
-        "127.0.0.1:5434/intentra_sandbox_demo"
+        "postgresql+asyncpg://intentra_sandbox:local-password@"
+        "127.0.0.1:55433/intentra_sandbox"
     )
     monkeypatch.setattr(sandbox_local, "get_database_url", lambda: url)
     monkeypatch.delenv(sandbox_local.DISPOSABLE_SANDBOX_DATABASE_FLAG, raising=False)

@@ -43,9 +43,9 @@ PAYPAL_ACCOUNT_ID_PATTERN = re.compile(r"[2-9A-HJ-NP-Z]{13}\Z")
 DISPOSABLE_SANDBOX_DATABASE_FLAG = "INTENTRA_ALLOW_DISPOSABLE_SANDBOX_DATABASE"
 DISPOSABLE_SANDBOX_DATABASE = (
     "127.0.0.1",
-    5434,
-    "intentra_sandbox_demo",
-    "intentra_sandbox_runner",
+    55433,
+    "intentra_sandbox",
+    "intentra_sandbox",
 )
 
 
