@@ -111,6 +111,24 @@ the documented local loopback Ollama inference; there is no hosted AI provider.
 No authenticated YouTube publisher or Devpost submission session/tool is
 available, so neither a public video nor a Devpost receipt/URL is claimed.
 
+## Sandbox and hosted-AI continuation
+
+A private, ignored, owner-only (`0600`) local operator template is available at
+`apps/api/.env.paypal.sandbox.json`. It contains empty Client ID/Secret fields,
+the local origin configuration, and the synthetic `office_store` mapping with
+a placeholder for the 13-character Sandbox Business Account ID. The Sandbox
+business email was not used as a merchant ID because the provider validates the
+actual Account ID in order and capture responses. No OAuth request was made
+with placeholders and no provider-side payment artifact exists.
+
+The exact post-credential preflight is
+`cd apps/api && .venv/bin/python scripts/paypal_sandbox_local.py check`.
+It performs OAuth only, never creates an order, and requires the local contract
+database to verify the server-owned mapping. The current API Preview has no
+Groq API key/base URL/model variable configured, so no hosted AI call was made;
+Ollama remains the documented local fallback. Focused offline PayPal and AI
+security tests passed **158** cases in 1.05 seconds.
+
 ## Official-rule alignment
 
 As checked on 2026-11-07, the official PayPal AI Hackathon rules require

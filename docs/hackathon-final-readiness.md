@@ -180,6 +180,33 @@ Sandbox limitation: no safeguarded local Sandbox configuration exists, so no
 order, approval, capture, or reconciliation was attempted. No public video or
 Devpost submission URL exists in the available authenticated tooling.
 
+### Sandbox and hosted-AI continuation — 2026-11-07
+
+The local, Git-ignored operator file
+`apps/api/.env.paypal.sandbox.json` has been prepared with mode `0600`. It has
+empty Client ID and Client Secret placeholders and maps the synthetic demo
+merchant `office_store` to an explicit placeholder for the required
+13-character Sandbox Business Account ID. The supplied business-account email
+is an account login identifier, not the merchant identifier required by the
+Orders API, and was not inserted as a mapping. No credentials, OAuth token,
+order, reservation, approval, capture, or reconciliation were created.
+
+The implementation expects `PAYPAL_SANDBOX_CLIENT_ID`,
+`PAYPAL_SANDBOX_CLIENT_SECRET`, and `PAYPAL_SANDBOX_MERCHANTS`. Once the
+operator enters the Client ID, Client Secret, and Dashboard Business Account ID
+in that ignored file, `scripts/paypal_sandbox_local.py check` performs the
+read-only OAuth preflight. It also requires the configured local database to
+validate that `office_store` is exactly the merchant used by the current local
+contracts; do not run the checkout flow against a non-disposable database.
+
+The API Preview variable-name inspection found no `INTENTRA_LLM_API_KEY`,
+`INTENTRA_LLM_BASE_URL`, or `INTENTRA_LLM_MODEL` entry. Groq is therefore not
+configured or contacted. The documented free-tier operator action is to add
+those API-project Preview values, with `AGENT_AI_PROVIDER=openai` and
+`AGENT_LLM_ENABLED=true`, while retaining local Ollama as the fallback.
+Focused offline PayPal merchant/OAuth/capture safety and AI provider tests
+passed: **158 passed**. This is not live provider evidence.
+
 ## Official submission requirements checked
 
 The official rules require meaningful use of PayPal Sandbox and an AI tool, a
