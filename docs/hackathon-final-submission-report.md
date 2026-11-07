@@ -62,6 +62,21 @@ from Vercel. Exposing it publicly would be unsafe. The reproducible local demo
 is documented; a hosted solution needs a separately provisioned free-tier
 provider, API-only secret/configuration, and security review.
 
+Groq was evaluated as the preferred hosted option on 2026-11-07. Its documented
+OpenAI-compatible endpoint is supported by INTENTRA's existing adapter, and its
+free tier has account-specific rate limits. Secure Preview configuration is
+documented in `apps/api/AI_PROVIDER.md`; no Groq key is configured, so no
+hosted inference is claimed. Hugging Face is only a fallback because its free
+Inference Providers credit is limited and not a durable zero-cost guarantee.
+
+The approved USD 0.01 Sandbox rehearsal remains blocked before provider contact:
+the local `apps/api/.env.paypal.sandbox.json` credential/merchant-mapping file
+is absent. Required operator-supplied secret-manager fields are
+`PAYPAL_SANDBOX_CLIENT_ID`, `PAYPAL_SANDBOX_CLIENT_SECRET`, and a server-owned
+`PAYPAL_SANDBOX_MERCHANTS` mapping to the intended Sandbox business account,
+plus a distinct Sandbox buyer login. No order, buyer approval, capture, or
+reconciliation was attempted.
+
 The earlier web Preview was protected by Vercel Authentication and was not
 judge-accessible. A corrected direct API package deployment reached Vercel Ready at
 `https://intentra-4p18mjxay-cgarg3s-projects.vercel.app`, but `/health`

@@ -131,6 +131,13 @@ free-tier provider/account, API-only secret configuration, and security review.
 The reproducible demo path remains local Ollama as documented in
 `apps/api/AI_PROVIDER.md` and `README.md`.
 
+Groq is the documented preferred hosted path: the existing OpenAI-compatible
+adapter accepts its HTTPS API base URL and validates every structured result
+independently. No Groq credential is configured and no hosted inference has
+been claimed. The single approved Sandbox order cannot be created because the
+required local Sandbox credential and server-owned merchant-mapping file is
+absent; no provider request has been made.
+
 ### Approved Preview attempt
 
 The approved API Preview repair was deployed from the repository root using an

@@ -20,6 +20,28 @@ For local Ollama, set `AGENT_AI_PROVIDER=ollama`,
 `http://127.0.0.1:11434`. The API rejects non-loopback URLs and bypasses proxy
 environment variables for Ollama requests. No Ollama API key is used.
 
+## Groq hosted inference (optional, server-side only)
+
+The existing `openai` adapter is compatible with Groq's OpenAI-compatible Chat
+Completions API; no browser variable, proxy, or local-Ollama exposure is needed.
+For a hosted Preview, configure these **API project Preview secrets/config only**:
+
+```text
+AGENT_AI_PROVIDER=openai
+AGENT_LLM_ENABLED=true
+INTENTRA_LLM_BASE_URL=https://api.groq.com/openai/v1
+INTENTRA_LLM_MODEL=openai/gpt-oss-20b
+INTENTRA_LLM_API_KEY=<Groq API key from the operator's free-tier account>
+```
+
+Never set `INTENTRA_LLM_API_KEY` in the web project or any `NEXT_PUBLIC_*`
+variable. The adapter requests JSON mode and independently rejects unknown,
+ungrounded, malformed, oversized, or invalid-money fields; a Groq `429` is
+reported as a rate-limit error and is not silently replaced with mock output.
+Use a supported model and review the account's current limits before enabling
+it. A genuine hosted smoke test is required after secure configuration; the
+presence of these variables alone is not proof of inference.
+
 System Status reports provider selection, configuration, runtime availability,
 and whether the configured Ollama model is present. Its Ollama availability
 check is a bounded, read-only `GET /api/tags`; it does not load or execute a
