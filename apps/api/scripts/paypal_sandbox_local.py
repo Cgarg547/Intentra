@@ -40,19 +40,35 @@ ALLOWED_ORIGINS = "http://localhost:3000"
 FRONTEND_API_URL = "http://127.0.0.1:8000"
 TARGET_REVISION = CURRENT_ALEMBIC_HEAD
 PAYPAL_ACCOUNT_ID_PATTERN = re.compile(r"[2-9A-HJ-NP-Z]{13}\Z")
+DISPOSABLE_SANDBOX_DATABASE_FLAG = "INTENTRA_ALLOW_DISPOSABLE_SANDBOX_DATABASE"
+DISPOSABLE_SANDBOX_DATABASE = (
+    "127.0.0.1",
+    5434,
+    "intentra_sandbox_demo",
+    "intentra_sandbox_runner",
+)
 
 
 def _database_url_for_development() -> str:
     url = get_database_url()
     parsed = make_url(url)
-    if (
+    development_target = (
         parsed.host,
         parsed.port,
         parsed.database,
         parsed.username,
-    ) != ("127.0.0.1", 5433, "intentra", "intentra"):
-        raise RuntimeError("Local setup requires the verified intentra development database.")
-    return url
+    )
+    if development_target == ("127.0.0.1", 5433, "intentra", "intentra"):
+        return url
+    if (
+        os.getenv(DISPOSABLE_SANDBOX_DATABASE_FLAG) == "1"
+        and development_target == DISPOSABLE_SANDBOX_DATABASE
+    ):
+        return url
+    raise RuntimeError(
+        "Local setup requires the verified intentra development database, or the "
+        "explicitly enabled disposable Sandbox database."
+    )
 
 
 async def _contract_merchants() -> list[str]:

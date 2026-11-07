@@ -207,6 +207,32 @@ those API-project Preview values, with `AGENT_AI_PROVIDER=openai` and
 Focused offline PayPal merchant/OAuth/capture safety and AI provider tests
 passed: **158 passed**. This is not live provider evidence.
 
+### Controlled Sandbox rehearsal preflight — 2026-11-07
+
+An isolated, disposable PostgreSQL 17 database was created locally on loopback
+`127.0.0.1:5434` as `intentra_sandbox_demo`; it is not Neon Preview or
+Production. Only that database was migrated to Alembic head
+`9d7f1a4c6b20`. The Sandbox launcher now requires an explicit
+`INTENTRA_ALLOW_DISPOSABLE_SANDBOX_DATABASE=1` opt-in and accepts only that
+exact loopback database identity, while retaining the existing development
+database allowlist. This prevents an accidental hosted or arbitrary database
+target.
+
+The synthetic owner created and explicitly approved exactly one local contract
+for `paypal_merchant_demo`, USD `0.01`. The private owner-only configuration
+maps that internal merchant to the supplied 13-character Sandbox business ID
+without exposing its credentials. Configuration JSON, ignored-file coverage,
+and `0600` permissions passed.
+
+The read-only `POST /v1/oauth2/token` Sandbox preflight reached the Sandbox
+endpoint but returned HTTP `401`; the access token and response body were not
+recorded. Therefore the entered credentials have **not** been verified as the
+INTENTRA Sandbox REST app. No PayPal order, buyer approval, capture,
+reconciliation, or provider-side payment artifact was created. The buyer is
+not verified because no safe interactive approval session can begin until OAuth
+succeeds. Focused offline Sandbox safety tests, including the disposable DB
+allowlist test, passed: **88 passed**.
+
 ## Official submission requirements checked
 
 The official rules require meaningful use of PayPal Sandbox and an AI tool, a

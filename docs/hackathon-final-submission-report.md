@@ -129,6 +129,23 @@ Groq API key/base URL/model variable configured, so no hosted AI call was made;
 Ollama remains the documented local fallback. Focused offline PayPal and AI
 security tests passed **158** cases in 1.05 seconds.
 
+## Controlled Sandbox rehearsal status
+
+The approved USD 0.01 local synthetic contract exists only in a newly created,
+isolated local PostgreSQL database on loopback port 5434; it is not a Neon or
+production target. The merchant is `paypal_merchant_demo` and is mapped in the
+ignored `0600` local configuration to the supplied Sandbox business Account ID.
+The launcher requires an explicit opt-in and exact local database identity for
+this disposable target.
+
+The read-only Sandbox OAuth preflight reached `api-m.sandbox.paypal.com` and
+received HTTP 401. No token or provider error body was retained. This means the
+configured credentials are not currently verified as the existing INTENTRA
+Sandbox REST app. No PayPal order ID exists; no buyer approval, capture, or
+reconciliation was attempted. The separate buyer account remains unverified
+until corrected app credentials permit a single interactive approval flow.
+Focused offline PayPal safety tests passed **88** cases.
+
 ## Official-rule alignment
 
 As checked on 2026-11-07, the official PayPal AI Hackathon rules require
