@@ -50,7 +50,7 @@ enabled.
 | PayPal Sandbox order, buyer approval, capture, reconciliation | Blocked before provider contact — the required local 0600 Sandbox config/merchant mapping is absent; no order was created |
 | Dedicated writable test database / remote migrations | Not executed; no disposable database authorization supplied |
 | Preview deployment and public smoke test | PASS — Git-triggered Preview API health is 200; public web alias is reachable; synthetic register/me/logout sequence passed and protected API is 401 without a session |
-| Git commit/push/public repository verification | PASS — `4f2ace2b7036ba1f48f92ae87b803597cf6e3c66` pushed to `deploy/intentra-vercel-preview`; repository is public. Default branch/license detection remains pending tool access. |
+| Git commit/push/public repository verification | PASS — public repository default branch is `deploy/intentra-vercel-preview`; GitHub detects Apache-2.0. Verified branch head: `7f81f5ecc662543a3554f71c6b1ad582f7d52e0e`. |
 | Video capture, YouTube public upload | Not executed; no recording/upload account tooling or final publication approval |
 | Devpost draft/final submission | Not executed; no authenticated Devpost session or final submission approval |
 
@@ -82,13 +82,19 @@ lookup (200), and logout (204) smoke test passed without any payment records.
 
 ## Public repository finding
 
-`https://github.com/Cgarg547/Intentra` is public and reachable, but GitHub's
-public API reports default branch `feature/intent-contract-lifecycle` with no
-detected license. The release branch has an Apache-2.0 `LICENSE`, but pushing
-it alone will not change GitHub's default-branch license detection. A reviewed
-commit/push and either default-branch update or equivalent license-file change
-on the default branch are needed before the hackathon license requirement can
-be marked verified.
+`https://github.com/Cgarg547/Intentra` is public and reachable. On 2026-11-07,
+the authorized default branch was changed to `deploy/intentra-vercel-preview`.
+GitHub's public repository API subsequently detected the Apache-2.0 license.
+The verified release head is `7f81f5ecc662543a3554f71c6b1ad582f7d52e0e`.
+
+## Final external limitations
+
+No dedicated local Sandbox configuration file is present, so the mandatory
+merchant mapping and disposable-local-database preflight cannot pass. No PayPal
+order was created and no capture was attempted. The only genuine AI evidence is
+the documented local loopback Ollama inference; there is no hosted AI provider.
+No authenticated YouTube publisher or Devpost submission session/tool is
+available, so neither a public video nor a Devpost receipt/URL is claimed.
 
 ## Official-rule alignment
 

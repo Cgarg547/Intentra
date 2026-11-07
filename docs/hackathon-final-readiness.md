@@ -155,10 +155,23 @@ protection enabled. The web project’s Preview Vercel Authentication was disabl
 for judge access; application authentication remains enforced: unauthenticated
 `/api/auth/me` returned HTTP 401 with `AUTHENTICATION_REQUIRED`.
 
-A synthetic `example.com` Preview user was registered (201), retrieved through
+A synthetic, non-delivery Preview user was registered (201), retrieved through
 the web proxy (200), and logged out (204). No financial workflow record was
 created. The first `.test` address attempt returned 422 before persistence;
 temporary cookies and response files were removed after each smoke test.
+
+### Final publication verification
+
+On 2026-11-07, GitHub's public repository API confirmed that
+`deploy/intentra-vercel-preview` is the default branch and detected the
+repository's `Apache-2.0` license. The verified branch head is
+`7f81f5ecc662543a3554f71c6b1ad582f7d52e0e`.
+
+The public Preview URLs above are accessible without Vercel deployment
+authentication. This does not change the local-only AI limitation or the
+Sandbox limitation: no safeguarded local Sandbox configuration exists, so no
+order, approval, capture, or reconciliation was attempted. No public video or
+Devpost submission URL exists in the available authenticated tooling.
 
 ## Official submission requirements checked
 
