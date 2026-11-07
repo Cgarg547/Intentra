@@ -49,8 +49,8 @@ enabled.
 | Live Ollama inference | PASS — local `qwen3:4b` adapter invocation returned validated structured output in 11.2s, without persistence |
 | PayPal Sandbox order, buyer approval, capture, reconciliation | Blocked before provider contact — the required local 0600 Sandbox config/merchant mapping is absent; no order was created |
 | Dedicated writable test database / remote migrations | Not executed; no disposable database authorization supplied |
-| Preview deployment and public smoke test | API package deployment reached Vercel Ready, but `/health` returned function 500 because direct CLI Preview did not receive branch-scoped `DATABASE_URL`; web not redeployed against an unhealthy API |
-| Git commit/push/public repository verification | Not executed; requires final push/publication confirmation |
+| Preview deployment and public smoke test | PASS — Git-triggered Preview API health is 200; public web alias is reachable; synthetic register/me/logout sequence passed and protected API is 401 without a session |
+| Git commit/push/public repository verification | PASS — `4f2ace2b7036ba1f48f92ae87b803597cf6e3c66` pushed to `deploy/intentra-vercel-preview`; repository is public. Default branch/license detection remains pending tool access. |
 | Video capture, YouTube public upload | Not executed; no recording/upload account tooling or final publication approval |
 | Devpost draft/final submission | Not executed; no authenticated Devpost session or final submission approval |
 
@@ -62,14 +62,23 @@ from Vercel. Exposing it publicly would be unsafe. The reproducible local demo
 is documented; a hosted solution needs a separately provisioned free-tier
 provider, API-only secret/configuration, and security review.
 
-The current web Preview is protected by Vercel Authentication and is not
-judge-accessible. A corrected API package deployment reached Vercel Ready at
+The earlier web Preview was protected by Vercel Authentication and was not
+judge-accessible. A corrected direct API package deployment reached Vercel Ready at
 `https://intentra-4p18mjxay-cgarg3s-projects.vercel.app`, but `/health`
 returned `FUNCTION_INVOCATION_FAILED`: its logs show FastAPI correctly failed
 closed because direct CLI Preview did not receive `DATABASE_URL`. The original
 branch-scoped Preview secret was not changed; the required local Sandbox config
 file is also absent. No web redeploy, remote migration, PayPal request, order,
 or capture was performed.
+
+The Git-triggered API Preview is healthy at
+`https://intentra-7icfj1dgw-cgarg3s-projects.vercel.app`; its `/health` returns
+HTTP 200 with `database_configured: true` and origin protection enabled. The
+public judge web alias is
+`https://intentra-web-git-deploy-intentra-vercel-cc5dcf-cgarg3s-projects.vercel.app`.
+Its unauthenticated `/api/auth/me` response is HTTP 401 with
+`AUTHENTICATION_REQUIRED`. A synthetic Preview account register (201), session
+lookup (200), and logout (204) smoke test passed without any payment records.
 
 ## Public repository finding
 

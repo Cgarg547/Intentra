@@ -143,6 +143,23 @@ refused to import. The existing branch-scoped Preview secret was not modified.
 The local Sandbox config file required for the approved USD 0.01 rehearsal is
 absent, so no PayPal request, order, or durable payment record was created.
 
+### Verified Git-triggered Preview
+
+After release commit `4f2ace2b7036ba1f48f92ae87b803597cf6e3c66` was pushed,
+Vercel's branch deployment produced a healthy API Preview at
+`https://intentra-7icfj1dgw-cgarg3s-projects.vercel.app` and a web Preview at
+`https://intentra-gw2ded7sp-cgarg3s-projects.vercel.app`. The stable branch web
+alias is `https://intentra-web-git-deploy-intentra-vercel-cc5dcf-cgarg3s-projects.vercel.app`.
+The API `/health` returned HTTP 200 with `database_configured: true` and origin
+protection enabled. The web project’s Preview Vercel Authentication was disabled
+for judge access; application authentication remains enforced: unauthenticated
+`/api/auth/me` returned HTTP 401 with `AUTHENTICATION_REQUIRED`.
+
+A synthetic `example.com` Preview user was registered (201), retrieved through
+the web proxy (200), and logged out (204). No financial workflow record was
+created. The first `.test` address attempt returned 422 before persistence;
+temporary cookies and response files were removed after each smoke test.
+
 ## Official submission requirements checked
 
 The official rules require meaningful use of PayPal Sandbox and an AI tool, a
