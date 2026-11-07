@@ -53,7 +53,9 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    # Keep offline SQL generation on the same asyncpg URL normalization path
+    # as the application and online Alembic engine.
+    url = get_database_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
