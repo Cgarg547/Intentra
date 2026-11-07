@@ -39,7 +39,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     const detail = typeof payload === "object" && payload !== null && "detail" in payload && typeof payload.detail === "string"
       ? payload.detail : `Request failed (${response.status}).`;
-    const message = response.status === 401 ? "Your session has expired. Sign in to continue."
+    const code = response.headers.get("X-Intentra-Error-Code")
+      ?? (typeof payload === "object" && payload !== null && "code" in payload && typeof payload.code === "string" ? payload.code : null);
+    const message = response.status === 401
+      ? code === "SESSION_INVALID" ? "Your session has expired. Sign in to continue."
+        : code === "AUTHENTICATION_REQUIRED" ? "Sign in to view proposal history."
+          : "The API is unavailable or protected by deployment access controls."
       : response.status === 403 ? "This request was blocked. Open INTENTRA on the same address where you signed in."
       : response.status === 422 ? "Check your request and contract selection, then submit again."
       : response.status === 429 ? "Too many requests. Wait a few minutes before starting a new proposal."

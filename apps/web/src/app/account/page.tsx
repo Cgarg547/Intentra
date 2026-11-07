@@ -17,9 +17,8 @@ export default function AccountPage() {
           Account access
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Sign in to manage your human-governed intent contracts.
-          This local development environment uses FastAPI session
-          authentication.
+          Sign in to manage your human-governed intent contracts with a secure
+          INTENTRA session.
         </p>
       </div>
 

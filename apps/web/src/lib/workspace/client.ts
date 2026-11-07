@@ -1,3 +1,5 @@
+import { ApiError } from "@/lib/auth/client";
+
 export type AuditItem = {
   event_id: string;
   correlation_id: string | null;
@@ -35,14 +37,26 @@ export type AnalyticsSummary = {
 // unknown in the UI rather than implying a healthy configuration.
 export type SystemStatus = { api?: string; database?: string; paypal_sandbox?: string; trusted_merchants?: string; llm_mode?: string; llm_provider?: string; llm_runtime?: string; llm_model_status?: string; checked_at?: string };
 
+function requestFailure(response: Response, payload: unknown): ApiError {
+  const code = response.headers.get("X-Intentra-Error-Code")
+    ?? (typeof payload === "object" && payload !== null && "code" in payload
+      && typeof payload.code === "string" ? payload.code : null);
+  const detail = typeof payload === "object" && payload !== null && "detail" in payload
+    && typeof payload.detail === "string" ? payload.detail : `Request failed (${response.status}).`;
+  // A proxy or deployment-protection 401 has no INTENTRA error code. It must
+  // not be presented as an expired browser session.
+  const message = response.status === 401
+    ? code === "SESSION_INVALID" ? "Your session has expired. Sign in again to view workspace data."
+      : code === "AUTHENTICATION_REQUIRED" ? "Sign in to view workspace data."
+        : "The API is unavailable or protected by deployment access controls."
+    : detail;
+  return new ApiError(response.status, message, code);
+}
+
 async function request<T>(path: string): Promise<T> {
   const response = await fetch(path, { credentials: "same-origin", cache: "no-store" });
   const payload: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message = typeof payload === "object" && payload !== null && "detail" in payload && typeof payload.detail === "string"
-      ? payload.detail : `Request failed (${response.status}).`;
-    throw new Error(response.status === 401 ? "Your session has expired. Sign in again to view workspace data." : message);
-  }
+  if (!response.ok) throw requestFailure(response, payload);
   return payload as T;
 }
 

@@ -7,6 +7,7 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    public readonly code: string | null = null,
   ) {
     super(message);
     this.name = "ApiError";
@@ -31,6 +32,9 @@ async function request<T>(
     const payload: unknown = await response.json().catch(() => null);
 
     let message = `Request failed (${response.status})`;
+    const code = response.headers.get("X-Intentra-Error-Code")
+      ?? (typeof payload === "object" && payload !== null && "code" in payload
+        && typeof payload.code === "string" ? payload.code : null);
 
     if (
       typeof payload === "object" &&
@@ -41,7 +45,7 @@ async function request<T>(
       message = payload.detail;
     }
 
-    throw new ApiError(response.status, message);
+    throw new ApiError(response.status, message, code);
   }
 
   if (response.status === 204) {

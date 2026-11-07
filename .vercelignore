@@ -1,0 +1,15 @@
+# Local secrets and environments are supplied by Vercel, never uploaded.
+.env
+.env.*
+apps/api/.env
+apps/api/.env.*
+.venv/
+apps/api/.venv/
+
+# Generated local development, test, and build output.
+apps/web/node_modules/
+apps/web/.next/
+apps/web/.next*/
+apps/web/test-results/
+apps/web/playwright-report/
+apps/api/.pytest_cache/

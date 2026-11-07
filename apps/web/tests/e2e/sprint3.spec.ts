@@ -37,7 +37,7 @@ async function mockWorkspace(page: Page, options: { attemptState?: string; appro
     if (path === `/api/contracts/${contractId}/approve` && request.method() === "POST") { contract = sampleContract("APPROVED"); return route.fulfill({ status: 200, json: contract }); }
     if (path === `/api/contracts/${contractId}/revoke` && request.method() === "POST") { contract = sampleContract("REVOKED"); return route.fulfill({ status: 200, json: contract }); }
     if (path === "/api/payments/history" && request.method() === "GET") {
-      if (options.historyUnauthorized) return route.fulfill({ status: 401, json: { detail: "Session expired" } });
+      if (options.historyUnauthorized) return route.fulfill({ status: 401, headers: { "X-Intentra-Error-Code": "SESSION_INVALID" }, json: { detail: "Session expired" } });
       if (approvalReturned && !attempt) attempt = { attempt_id: attemptId, reservation_id: reservationId, contract_id: contractId, provider_order_id: "E2E-ORDER", capture_id: null, attempt_state: "PENDING", reservation_state: "EXECUTION_PENDING", approval_state: "APPROVED", merchant_id: "demo-merchant", amount: "24.50", currency: "USD", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), approval_verified_at: new Date().toISOString(), events: [] };
       return route.fulfill({ status: 200, json: { items: attempt ? [attempt] : [] } });
     }
@@ -249,14 +249,14 @@ test("definitively failed capture is shown as failed", async ({ page }) => {
 test("unauthorized payment history is reported without sample transactions", async ({ page }) => {
   await mockWorkspace(page, { historyUnauthorized: true });
   await page.goto("/payments");
-  await expect(page.locator("div[role=alert]").filter({ hasText: "Session expired" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "session has expired" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Check sign-in" })).toHaveAttribute("href", "/account");
 });
 
 test("API authorization failures are not shown as empty account data", async ({ page }) => {
   await mockWorkspace(page, { apiUnauthorized: true });
   await page.goto("/payments");
-  await expect(page.getByRole("alert").filter({ hasText: "session" })).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "API is unavailable or protected" })).toBeVisible();
   await expect(page.getByText("No approved contracts are available.")).toHaveCount(0);
   await expect(page.getByText("No payment attempts have been created.")).toHaveCount(0);
 });

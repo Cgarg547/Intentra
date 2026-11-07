@@ -19,7 +19,7 @@ function saved(overrides: Partial<AgentProposal> = {}): AgentProposal {
 type Api = {
   history: AgentProposal[];
   historyStatus: number;
-  mode: "success" | "hold" | "network" | "unauthorized" | "validation" | "unavailable" | "malformed";
+  mode: "success" | "hold" | "network" | "unauthorized" | "session_invalid" | "validation" | "unavailable" | "malformed";
   posts: { key: string; body: { request: string; contract_id: string | null } }[];
   reads: string[];
   pending: Route[];
@@ -49,6 +49,7 @@ const test = base.extend<{ api: Api }>({
         if (api.mode === "hold") { api.pending.push(route); return; }
         if (api.mode === "network") return route.abort("failed");
         if (api.mode === "unauthorized") return route.fulfill({ status: 401, json: { detail: "Not authenticated" } });
+        if (api.mode === "session_invalid") return route.fulfill({ status: 401, headers: { "X-Intentra-Error-Code": "SESSION_INVALID" }, json: { detail: "Invalid session" } });
         if (api.mode === "validation") return route.fulfill({ status: 422, json: { detail: [] } });
         if (api.mode === "unavailable") return route.fulfill({ status: 503, json: { detail: "Provider unavailable" } });
         if (api.mode === "malformed") return route.fulfill({ status: 201, json: { id: proposalId } });
@@ -159,13 +160,22 @@ for (const mode of ["network", "unavailable", "malformed"] as const) {
   });
 }
 
-test("expired authentication on submission offers sign in and no retry", async ({ page, api }) => {
+test("bare unauthorized submission reports an unavailable or protected API and does not retry", async ({ page, api }) => {
   api.mode = "unauthorized";
+  await open(page);
+  await page.getByRole("button", { name: "Create proposal", exact: true }).click();
+  await expect(page.locator("#main-content").getByRole("alert")).toContainText("API is unavailable or protected");
+  await expect(page.getByRole("button", { name: "Create proposal", exact: true })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Sign in", exact: true })).toBeVisible();
+  expect(api.posts).toHaveLength(1);
+});
+
+test("coded invalid session reports expiry and does not retry", async ({ page, api }) => {
+  api.mode = "session_invalid";
   await open(page);
   await page.getByRole("button", { name: "Create proposal", exact: true }).click();
   await expect(page.locator("#main-content").getByRole("alert")).toContainText("Your session has expired");
   await expect(page.getByRole("button", { name: "Create proposal", exact: true })).toBeDisabled();
-  await expect(page.getByRole("link", { name: "Sign in", exact: true })).toBeVisible();
   expect(api.posts).toHaveLength(1);
 });
 

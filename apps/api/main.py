@@ -38,8 +38,12 @@ app.include_router(workspace_router)
 
 @app.get("/health")
 def health():
+    # Deliberately configuration-state only: this endpoint is suitable for a
+    # deployment smoke check and never exposes connection details or secrets.
     return {
         "status": "healthy",
         "service": "intentra-api",
         "version": "0.1.0",
+        "database_configured": bool(os.getenv("DATABASE_URL")),
+        "origin_protection": "enabled",
     }
