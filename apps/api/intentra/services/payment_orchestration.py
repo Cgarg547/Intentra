@@ -58,7 +58,11 @@ def _approval_url(order: dict) -> str:
             href = link.get("href")
             if isinstance(href, str):
                 parsed = urlsplit(href)
-                if parsed.scheme == "https" and parsed.hostname == "www.sandbox.paypal.com" and parsed.username is None and parsed.password is None:
+                if (parsed.scheme == "https"
+                        and parsed.hostname == "www.sandbox.paypal.com"
+                        and parsed.username is None
+                        and parsed.password is None
+                        and not parsed.fragment):
                     return href
     raise PaymentOrchestrationError(
         "PayPal order has no valid Sandbox approval link.",
