@@ -86,6 +86,10 @@ provider result is not a failed payment and is never an authorization to retry.
 
 ## Redacted evidence to retain
 
+Verified Sandbox evidence: the USD 25.00 demonstration reconciled to payment
+state `SUCCEEDED`, reservation state `CAPTURED`, and provider status
+`COMPLETED`. This is PayPal Sandbox evidence only, never a live-payment claim.
+
 - Build revision, environment label (`Sandbox`), timestamp, and tester role.
 - Contract/proposal/reservation/attempt state transitions using internal UUIDs or
   approved short suffixes only.
