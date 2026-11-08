@@ -27,11 +27,11 @@ Completions API; no browser variable, proxy, or local-Ollama exposure is needed.
 For a hosted Preview, configure these **API project Preview secrets/config only**:
 
 ```text
-AGENT_AI_PROVIDER=openai
+AGENT_AI_PROVIDER=groq
 AGENT_LLM_ENABLED=true
 INTENTRA_LLM_BASE_URL=https://api.groq.com/openai/v1
 INTENTRA_LLM_MODEL=openai/gpt-oss-20b
-INTENTRA_LLM_API_KEY=<Groq API key from the operator's free-tier account>
+GROQ_API_KEY=<Groq API key from the operator's free-tier account>
 ```
 
 Never set `INTENTRA_LLM_API_KEY` in the web project or any `NEXT_PUBLIC_*`
