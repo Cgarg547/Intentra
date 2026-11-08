@@ -456,7 +456,7 @@ def get_purchase_planning_provider() -> PurchasePlanningProvider:
     configured_provider = os.getenv("AGENT_AI_PROVIDER", "mock").strip().lower()
     if configured_provider == "mock":
         return MockPurchasePlanningProvider()
-    if configured_provider not in {"openai", "llm", "ollama"}:
+    if configured_provider not in {"openai", "llm", "groq", "ollama"}:
         logger.error("purchase_planning_provider_invalid", extra={
             "event_name": "purchase_planning_provider_invalid",
             "error_code": "AI_PROVIDER_CONFIGURATION_INVALID",
@@ -475,8 +475,10 @@ def get_purchase_planning_provider() -> PurchasePlanningProvider:
             raise AgentProviderError("Ollama timeout is invalid.", code="OLLAMA_CONFIGURATION_INVALID") from None
         return OllamaPurchasePlanningProvider(base_url=base_url, model=model, timeout=timeout)
     endpoint = os.getenv("INTENTRA_LLM_BASE_URL", "").strip()
-    api_key = os.getenv("INTENTRA_LLM_API_KEY", "")
+    api_key = os.getenv("GROQ_API_KEY" if configured_provider == "groq" else "INTENTRA_LLM_API_KEY", "")
     model = os.getenv("INTENTRA_LLM_MODEL", "").strip()
+    if configured_provider == "groq" and not endpoint:
+        endpoint = "https://api.groq.com/openai/v1"
     try:
         parsed = httpx.URL(endpoint) if endpoint else None
     except httpx.InvalidURL:
@@ -509,7 +511,7 @@ async def get_purchase_planning_status() -> dict[str, str]:
     OpenAI is never contacted by status reporting.
     """
     selected = os.getenv("AGENT_AI_PROVIDER", "mock").strip().lower()
-    provider_name = selected if selected in {"mock", "openai", "llm", "ollama"} else "unknown"
+    provider_name = selected if selected in {"mock", "openai", "llm", "groq", "ollama"} else "unknown"
     try:
         provider = get_purchase_planning_provider()
     except AgentProviderError:
@@ -524,4 +526,4 @@ async def get_purchase_planning_status() -> dict[str, str]:
     if isinstance(provider, OllamaPurchasePlanningProvider):
         runtime, model = await provider.runtime_status()
         return {"provider": "ollama", "configuration": "configured", "runtime": runtime, "model": model}
-    return {"provider": "openai", "configuration": "configured", "runtime": "not_checked", "model": "not_checked"}
+    return {"provider": "groq" if provider_name == "groq" else "openai", "configuration": "configured", "runtime": "not_checked", "model": "not_checked"}

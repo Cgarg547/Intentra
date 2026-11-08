@@ -480,12 +480,13 @@ def test_provider_selection_is_explicit_and_never_falls_back(monkeypatch):
     assert get_purchase_planning_mode() == "misconfigured"
 
 
-def test_ollama_mode_is_allowed_by_proposal_model_constraint():
+def test_hosted_and_local_provider_modes_are_allowed_by_proposal_model_constraint():
     constraint = next(
         item for item in AgentProposalRecord.__table__.constraints
         if item.name == "ck_agent_proposal_provider_mode"
     )
     assert "'OLLAMA'" in str(constraint.sqltext)
+    assert "'OPENAI'" in str(constraint.sqltext)
 
 
 def test_ollama_selection_without_model_fails_closed(monkeypatch):
@@ -649,3 +650,23 @@ async def test_ollama_status_does_not_confuse_configuration_with_model_availabil
         base_url="http://127.0.0.1:11434", model="qwen3:4b", transport=httpx.MockTransport(tags))
     status = await provider.runtime_status()
     assert status in {("available", "missing"), ("unavailable", "unknown")}
+
+
+def test_groq_uses_server_only_key_and_default_openai_compatible_endpoint(monkeypatch):
+    monkeypatch.setenv("AGENT_AI_PROVIDER", "groq")
+    monkeypatch.setenv("AGENT_LLM_ENABLED", "true")
+    monkeypatch.setenv("GROQ_API_KEY", "unit-test-key-never-sent")
+    monkeypatch.setenv("INTENTRA_LLM_MODEL", "openai/gpt-oss-20b")
+    monkeypatch.delenv("INTENTRA_LLM_BASE_URL", raising=False)
+    provider = get_purchase_planning_provider()
+    assert isinstance(provider, ConfiguredLLMProvider)
+    assert provider.endpoint == "https://api.groq.com/openai/v1/chat/completions"
+
+
+def test_groq_without_a_server_only_key_fails_closed(monkeypatch):
+    monkeypatch.setenv("AGENT_AI_PROVIDER", "groq")
+    monkeypatch.setenv("AGENT_LLM_ENABLED", "true")
+    monkeypatch.setenv("INTENTRA_LLM_MODEL", "openai/gpt-oss-20b")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    with pytest.raises(AgentProviderError):
+        get_purchase_planning_provider()

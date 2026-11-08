@@ -316,6 +316,12 @@ class PayPalSandboxClient:
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
                     "PayPal-Request-Id": provider_idempotency_key,
+                    # The Orders API defaults to ``return=minimal``.  That
+                    # representation deliberately omits purchase_units, so it
+                    # cannot prove the receiving merchant or amount.  Request
+                    # the complete representation before accepting a 2xx
+                    # response as an order we may safely persist.
+                    "Prefer": "return=representation",
                 },
                 timeout=PAYPAL_HTTP_TIMEOUT,
                 json=paypal_request,

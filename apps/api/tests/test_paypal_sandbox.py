@@ -11,7 +11,7 @@ from intentra.services.paypal_sandbox import (
     PayPalSandboxConfig,
     PayPalSandboxError,
 )
-from intentra.services.payment_orchestration import _approval_url
+from intentra.services.payment_orchestration import PaymentOrchestrationError, _approval_url
 
 
 def capture_order_payload(status="COMPLETED", order_status="COMPLETED"):
@@ -389,6 +389,7 @@ async def test_paypal_order_creation_uses_idempotency():
         assert request.url.path == "/v2/checkout/orders"
         assert request.headers["PayPal-Request-Id"] == "intentra-test-123"
         assert request.headers["Authorization"] == "Bearer mock-token"
+        assert request.headers["Prefer"] == "return=representation"
 
         payload = json.loads(request.content)
         assert payload["intent"] == "CAPTURE"
@@ -427,6 +428,76 @@ async def test_paypal_order_creation_uses_idempotency():
         )
 
     assert order["id"] == "MOCK-ORDER-123"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [200, 201])
+async def test_paypal_create_requires_a_full_representation_for_new_or_idempotent_success(status_code):
+    """Both create (201) and idempotent replay (200) must be verifiable."""
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(200, json={"access_token": "mock-token"})
+        assert request.headers["Prefer"] == "return=representation"
+        return httpx.Response(status_code, json={
+            "id": "MOCK-FULL-REPRESENTATION",
+            "status": "PAYER_ACTION_REQUIRED",
+            "purchase_units": [{
+                "payee": {"merchant_id": "TEST_MERCHANT"},
+                "amount": {"currency_code": "USD", "value": "1.00"},
+            }],
+            "links": [{
+                "rel": "payer-action",
+                "href": "https://www.sandbox.paypal.com/checkoutnow?token=MOCK",
+            }],
+        })
+
+    paypal, http = make_client(handler)
+    async with http:
+        order = await paypal.create_order(
+            amount=Decimal("1.00"), currency="USD",
+            provider_idempotency_key="fullrepresentationkey1",
+            expected_paypal_merchant_id="TEST_MERCHANT",
+        )
+    assert order["id"] == "MOCK-FULL-REPRESENTATION"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [200, 201])
+async def test_paypal_minimal_success_response_remains_unknown_and_is_not_retried(status_code):
+    """A minimal response could represent a created order, never retry it."""
+    calls = []
+
+    def handler(request):
+        if request.url.path == "/v1/oauth2/token":
+            return httpx.Response(200, json={"access_token": "mock-token"})
+        calls.append(request)
+        # This is the documented default representation: ID, status and links,
+        # but no merchant/amount evidence.
+        return httpx.Response(status_code, json={
+            "id": "MOCK-MINIMAL-RESPONSE", "status": "CREATED",
+            "links": [{"rel": "approve", "href": "https://www.sandbox.paypal.com/checkoutnow?token=MOCK"}],
+        })
+
+    paypal, http = make_client(handler)
+    async with http:
+        with pytest.raises(PayPalOrderOutcomeUnknownError, match="invalid purchase unit"):
+            await paypal.create_order(
+                amount=Decimal("1.00"), currency="USD",
+                provider_idempotency_key="minimalresponsereplaykey1",
+                expected_paypal_merchant_id="TEST_MERCHANT",
+            )
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("href", [
+    "http://www.sandbox.paypal.com/checkoutnow?token=MOCK",
+    "https://evil.example/checkoutnow?token=MOCK",
+    "https://user@www.sandbox.paypal.com/checkoutnow?token=MOCK",
+    "https://www.sandbox.paypal.com/checkoutnow?token=MOCK#fragment",
+])
+def test_paypal_approval_link_validation_rejects_malformed_or_non_sandbox_urls(href):
+    with pytest.raises(PaymentOrchestrationError, match="approval link"):
+        _approval_url({"links": [{"rel": "payer-action", "href": href}]})
 
 
 @pytest.mark.asyncio

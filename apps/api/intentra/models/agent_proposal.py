@@ -17,7 +17,7 @@ class AgentProposalRecord(Base):
         CheckConstraint("proposed_currency IS NULL OR proposed_currency ~ '^[A-Z]{3}$'", name="ck_agent_proposal_currency"),
         CheckConstraint("status IN ('DRAFT','NEEDS_INFORMATION','READY_FOR_REVIEW','REJECTED','CONFIRMED')", name="ck_agent_proposal_status"),
         CheckConstraint("policy_decision IS NULL OR policy_decision IN ('ALLOW','DENY','NEEDS_INFORMATION')", name="ck_agent_proposal_decision"),
-        CheckConstraint("provider_mode IN ('SIMULATED','LLM','OLLAMA')", name="ck_agent_proposal_provider_mode"),
+        CheckConstraint("provider_mode IN ('SIMULATED','LLM','OLLAMA','OPENAI')", name="ck_agent_proposal_provider_mode"),
         CheckConstraint("version > 0", name="ck_agent_proposal_version"),
     )
 

@@ -6,7 +6,7 @@ from collections.abc import Iterable
 # Keep this value synchronized with the repository's sole Alembic head.  The
 # focused graph test prevents a new migration from silently making local
 # recovery/setup scripts accept an obsolete schema.
-CURRENT_ALEMBIC_HEAD = "9d7f1a4c6b20"
+CURRENT_ALEMBIC_HEAD = "a3d8e1f4b7c2"
 
 
 def has_current_schema_head(revisions: Iterable[object]) -> bool:
