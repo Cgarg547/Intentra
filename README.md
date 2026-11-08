@@ -1,13 +1,30 @@
 # INTENTRA — AI-Powered Purchasing & Financial Automation
 
-INTENTRA is a human-governed purchasing workflow for AI-assisted teams. AI structures purchase requests; deterministic policy, owner-scoped contracts, and explicit human actions control financial execution.
+> **Intelligent Spending. Human Control.**
+
+INTENTRA is a human-governed purchasing workspace for teams that want AI help without handing AI financial authority. A user describes a purchase in natural language; INTENTRA turns that request into a structured proposal, evaluates deterministic policy, and keeps contract approval, checkout, capture, and audit evidence under explicit human control.
+
+Built for the **PayPal AI Hackathon 2026**, INTENTRA demonstrates how AI-assisted purchasing can remain reviewable, policy-bound, and accountable from the first request through a verified provider outcome.
 
 ## Live Demo
 
-- Production workspace: https://intentra-web.vercel.app
-- Production API: https://intentra-api-iota.vercel.app/health
-- Source: https://github.com/Cgarg547/Intentra
-- PayPal AI Hackathon project and YouTube demo: to be added when published.
+- [**Open the live INTENTRA workspace**](https://intentra-web.vercel.app)
+- [**Watch the hackathon demo on YouTube**](https://youtu.be/keaojS9wMp4)
+- [**Browse the source on GitHub**](https://github.com/Cgarg547/Intentra)
+
+[![Watch the INTENTRA PayPal AI Hackathon demo](https://img.youtube.com/vi/keaojS9wMp4/hqdefault.jpg)](https://youtu.be/keaojS9wMp4)
+
+## Hackathon Demo
+
+The demo follows a controlled purchasing journey:
+
+```text
+Natural-language request → AI proposal → intent contract → policy evaluation
+→ human authorization → budget reservation → PayPal Sandbox checkout
+→ verified capture → audit history
+```
+
+The demonstrated wireless-mouse payment was **USD 25.00 in PayPal Sandbox**. It was a test transaction—not a real-money payment. INTENTRA treats buyer approval separately from capture and relies on persisted, provider-verified state before presenting a payment as complete.
 
 ## Key Features
 
