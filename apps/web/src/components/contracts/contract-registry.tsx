@@ -2,11 +2,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ContractInspector } from "./contract-inspector";
+
+import { ContractCreateForm } from "./contract-create-form";
+
+import { ContractOverview } from "./contract-overview";
+
 import {
   Search,
-  ShieldCheck,
-  FileClock,
-  ShieldX,
   RefreshCw,
 } from "lucide-react";
 
@@ -17,12 +20,6 @@ import type {
 } from "@/lib/contracts/types";
 
 type Filter = "ALL" | ContractStatus;
-
-const statusIcons = {
-  DRAFT: FileClock,
-  APPROVED: ShieldCheck,
-  REVOKED: ShieldX,
-};
 
 function formatAmount(contract: IntentContract) {
   return new Intl.NumberFormat("en-US", {
@@ -152,42 +149,11 @@ useEffect(() => {
 
   return (
     <div className="space-y-6">
-      <section
-        aria-label="Contract status summary"
-        className="grid gap-4 sm:grid-cols-3"
-      >
-        {(["APPROVED", "DRAFT", "REVOKED"] as const).map(
-          (status) => {
-            const Icon = statusIcons[status];
-
-            const count = liveContracts.filter(
-              (contract) => contract.status === status,
-            ).length;
-
-            return (
-              <article
-                key={status}
-                className="rounded-2xl border border-border bg-surface p-5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted">
-                    {status}
-                  </span>
-
-                  <Icon
-                    aria-hidden="true"
-                    className="h-5 w-5 text-accent"
-                  />
-                </div>
-
-                <p className="mt-4 text-3xl font-semibold text-foreground">
-                  {loading ? "—" : error ? "—" : count}
-                </p>
-              </article>
-            );
-          },
-        )}
-      </section>
+      <ContractOverview
+        contracts={liveContracts}
+        loading={loading}
+        error={error}
+      />
 
       <section className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -311,9 +277,9 @@ useEffect(() => {
 
         {!error && (
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-sm">
+            <table className="financial-table w-full min-w-[700px] text-left text-sm">
               <thead>
-                <tr className="border-b border-border text-muted">
+                <tr className="border-b border-border bg-surface-muted text-muted">
                   <th scope="col" className="px-3 py-3">
                     Merchant
                   </th>
@@ -341,17 +307,23 @@ useEffect(() => {
                     <tr key={contract.id}>
                       <th
                         scope="row"
-                        className="px-3 py-4 font-medium text-foreground"
+                        className="px-3 py-5 font-semibold text-foreground"
                       >
                         {contract.merchant_id}
                       </th>
 
-                      <td className="px-3 py-4 text-foreground">
+                      <td className="px-3 py-5 font-semibold tabular-nums text-foreground">
                         {formatAmount(contract)}
                       </td>
 
                       <td className="px-3 py-4">
-                        <span className="rounded-md border border-border px-2 py-1 text-xs font-semibold text-foreground">
+                        <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
+                          contract.status === "APPROVED"
+                            ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700"
+                            : contract.status === "DRAFT"
+                              ? "border-amber-500/20 bg-amber-500/10 text-amber-700"
+                              : "border-rose-500/20 bg-rose-500/10 text-rose-700"
+                        }`}>
                           {contract.status}
                         </span>
                       </td>
@@ -370,7 +342,7 @@ useEffect(() => {
                         <button
                           type="button"
                           onClick={() => setSelectedId(contract.id)}
-                          className="rounded-lg border border-border px-3 py-2 font-medium text-foreground hover:bg-surface-muted"
+                          className="inline-flex items-center justify-center rounded-xl border border-border bg-surface px-4 py-2 text-xs font-semibold text-foreground hover:bg-surface-muted"
                           aria-label={`Inspect contract for ${contract.merchant_id}`}
                         >
                           Inspect
@@ -392,93 +364,28 @@ useEffect(() => {
         )}
       </section>
 
-      <section className="rounded-2xl border border-border bg-surface p-6">
-        <h2 className="text-xl font-semibold">Create an intent contract</h2>
-        <p className="mt-1 text-sm text-muted">New contracts start as drafts and require your explicit approval before payment authorization.</p>
-        <form onSubmit={submitContract} className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <label className="space-y-2 text-sm"><span>Merchant ID</span><input required maxLength={128} value={merchantId} onChange={(e) => setMerchantId(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" placeholder="Registered merchant ID" /></label>
-          <label className="space-y-2 text-sm"><span>Maximum amount</span><input required min="0.01" step="0.01" type="number" value={maximumAmount} onChange={(e) => setMaximumAmount(e.target.value)} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" placeholder="250.00" /></label>
-          <label className="space-y-2 text-sm"><span>Currency</span><input required minLength={3} maxLength={3} pattern="[A-Z]{3}" value={currency} onChange={(e) => setCurrency(e.target.value.toUpperCase())} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" /></label>
-          <div className="flex items-end"><button disabled={saving} className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-50">{saving ? "Saving…" : "Create draft"}</button></div>
-        </form>
-        {actionError && <p role="alert" className="mt-4 text-sm text-red-500">{actionError}</p>}
-      </section>
+      <ContractCreateForm
+        merchantId={merchantId}
+        maximumAmount={maximumAmount}
+        currency={currency}
+        saving={saving}
+        error={actionError}
+        onMerchantChange={setMerchantId}
+        onAmountChange={setMaximumAmount}
+        onCurrencyChange={setCurrency}
+        onSubmit={submitContract}
+      />
 
       {!loading && !error && selected && (
-        <section
-          aria-labelledby="contract-details-heading"
-          className="rounded-2xl border border-border bg-surface p-6"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2
-                id="contract-details-heading"
-                className="text-xl font-semibold text-foreground"
-              >
-                Contract details
-              </h2>
-
-              <p className="mt-1 text-sm text-muted">
-                Read-only policy inspection
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setSelectedId(null)}
-              className="rounded-lg border border-border px-4 py-2 text-sm text-foreground"
-            >
-              Close details
-            </button>
-          </div>
-
-          <dl className="mt-6 grid gap-5 sm:grid-cols-2">
-            {[
-              ["Contract ID", selected.id],
-              ["Merchant", selected.merchant_id],
-              ["Maximum amount", formatAmount(selected)],
-              ["Lifecycle status", selected.status],
-              ["Contract version", String(selected.version)],
-              [
-                "Created",
-                new Date(selected.created_at).toLocaleString(),
-              ],
-              [
-                "Approved",
-                selected.approved_at
-                  ? new Date(
-                      selected.approved_at,
-                    ).toLocaleString()
-                  : "Not approved",
-              ],
-              [
-                "Revoked",
-                selected.revoked_at
-                  ? new Date(
-                      selected.revoked_at,
-                    ).toLocaleString()
-                  : "Not revoked",
-              ],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt className="text-xs text-muted">{label}</dt>
-
-                <dd className="mt-1 break-all text-sm font-medium text-foreground">
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-
-          <p className="mt-6 border-t border-border pt-4 text-xs text-muted">
-            This contract is stored in the authenticated account. Approving or revoking changes its authorization version.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {selected.status === "DRAFT" && <button type="button" disabled={saving} onClick={() => updateContract("approve")} className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-50">Approve contract</button>}
-            {selected.status === "APPROVED" && <button type="button" disabled={saving} onClick={() => updateContract("revoke")} className="rounded-xl border border-red-500/40 px-4 py-2.5 text-sm font-semibold text-red-600 disabled:opacity-50">Revoke contract</button>}
-          </div>
-        </section>
+        <ContractInspector
+          contract={selected}
+          saving={saving}
+          onClose={() => setSelectedId(null)}
+          onApprove={() => void updateContract("approve")}
+          onRevoke={() => void updateContract("revoke")}
+        />
       )}
+
     </div>
   );
 }

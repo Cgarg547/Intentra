@@ -1,5 +1,7 @@
 "use client";
 
+import { ApprovalOverview } from "@/components/approval-overview";
+import { ProposalReviewCard } from "@/components/approvals/proposal-review-card";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { confirmAgentProposal, listAgentProposals, rejectAgentProposal, type AgentProposal } from "@/lib/agents/client";
 
@@ -47,6 +49,8 @@ export default function ApprovalsPage() {
   }
 
   return <section className="space-y-6">
+    <ApprovalOverview proposals={proposals} loading={loading} />
+
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div><p className="text-xs font-semibold uppercase tracking-widest text-accent">Human review</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight">Approval Center</h1>
@@ -59,12 +63,24 @@ export default function ApprovalsPage() {
     {message && <p role="status" className="rounded-xl border border-border bg-surface p-4 text-sm">{message}</p>}
     {loading ? <div role="status" className="animate-pulse rounded-2xl border border-border bg-surface p-8 text-sm text-muted">Loading owner-scoped proposals…</div>
       : visible.length === 0 ? <div className="rounded-2xl border border-border bg-surface p-8"><h2 className="font-semibold">{showHistory ? "No decisions recorded" : "Review queue is clear"}</h2><p className="mt-2 text-sm text-muted">{showHistory ? "Proposal decisions will appear here." : "Proposals ready for your review will appear here."}</p></div>
-      : <div className="space-y-4">{visible.map((proposal) => <article key={proposal.proposal_id} className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-3"><div><span className="rounded-full border border-border px-2.5 py-1 text-xs font-semibold">{proposal.status}</span><h2 className="mt-3 text-lg font-semibold">{proposal.requested_purpose || "Purchase proposal"}</h2><p className="mt-1 text-sm text-muted">{proposal.provider_mode === "SIMULATED" ? "Simulated extraction" : "Configured model extraction"} · version {proposal.version}</p></div>
-          <div className="text-right"><p className="text-2xl font-semibold">{proposal.proposed_amount && proposal.currency ? new Intl.NumberFormat(undefined, { style: "currency", currency: proposal.currency }).format(Number(proposal.proposed_amount)) : "Amount missing"}</p><p className="mt-1 text-xs text-muted">{proposal.merchant_id || "Merchant missing"}</p></div></div>
-        <dl className="mt-5 grid gap-4 border-t border-border pt-4 text-sm sm:grid-cols-2"><div><dt className="text-xs text-muted">Contract</dt><dd className="mt-1 break-all">{proposal.contract_id ?? "Not selected"}{proposal.contract_version ? ` · version ${proposal.contract_version}` : ""}</dd></div><div><dt className="text-xs text-muted">Policy evaluation</dt><dd className="mt-1">{proposal.policy_decision ?? "Not evaluated"} · {proposal.policy_reason || "No policy explanation available."}</dd></div><div className="sm:col-span-2"><dt className="text-xs text-muted">Request</dt><dd className="mt-1">{proposal.request}</dd></div>{proposal.missing_information.length > 0 && <div className="sm:col-span-2"><dt className="text-xs text-muted">Missing information</dt><dd className="mt-1">{proposal.missing_information.join(", ")}</dd></div>}</dl>
-        {proposal.status === "READY_FOR_REVIEW" && <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between"><label className="flex-1 space-y-1 text-sm"><span>Rejection reason (required to reject)</span><input value={reasons[proposal.proposal_id] ?? ""} maxLength={500} onChange={(event) => setReasons((current) => ({ ...current, [proposal.proposal_id]: event.target.value }))} className="w-full rounded-xl border border-border bg-background px-3 py-2.5" /></label><div className="flex gap-2"><button type="button" disabled={working !== null || proposal.policy_decision !== "ALLOW"} onClick={() => void decide(proposal, "confirm")} className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-50">{working === proposal.proposal_id ? "Saving…" : "Confirm proposal"}</button><button type="button" disabled={working !== null || !reasons[proposal.proposal_id]?.trim()} onClick={() => void decide(proposal, "reject")} className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold disabled:opacity-50">Reject</button></div></div>}
-        {(proposal.events?.length ?? 0) > 0 && <details className="mt-4 border-t border-border pt-3"><summary className="cursor-pointer text-sm font-medium">Decision history ({proposal.events?.length ?? 0})</summary><ol className="mt-3 space-y-2">{proposal.events?.map((event, index) => <li key={`${event.event_type}-${index}`} className="rounded-lg bg-surface-muted p-3 text-sm"><span className="font-medium">{event.event_type}</span><span className="ml-2 text-xs text-muted">{new Date(event.created_at).toLocaleString()}</span><p className="mt-1 break-all text-xs text-muted">Actor: {event.actor_id ?? "System"}</p>{event.event_data.reason !== undefined && <p className="mt-1 text-muted">Reason: {String(event.event_data.reason)}</p>}</li>)}</ol></details>}
-      </article>)}</div>}
+      : <div className="space-y-4">
+          {visible.map((proposal) => (
+            <ProposalReviewCard
+              key={proposal.proposal_id}
+              proposal={proposal}
+              working={working !== null}
+              saving={working === proposal.proposal_id}
+              reason={reasons[proposal.proposal_id] ?? ""}
+              onReasonChange={(value) =>
+                setReasons((current) => ({
+                  ...current,
+                  [proposal.proposal_id]: value,
+                }))
+              }
+              onConfirm={() => void decide(proposal, "confirm")}
+              onReject={() => void decide(proposal, "reject")}
+            />
+          ))}
+        </div>}
   </section>;
 }

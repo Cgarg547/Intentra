@@ -184,6 +184,70 @@ export function AgentWorkspace() {
   const latestProposal = latestId ? proposals.find((proposal) => proposal.proposal_id === latestId) ?? null : null;
   return (
     <div className="space-y-7">
+      {/* INTENTRA AI STUDIO HEADER */}
+      <section className="relative isolate overflow-hidden rounded-[2rem] border border-violet-400/20 bg-[#10172d] px-6 py-7 text-white shadow-xl shadow-violet-950/10 sm:px-9 sm:py-8">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-32 h-80 w-80 rounded-full bg-violet-500/20 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-40 left-1/3 h-72 w-72 rounded-full bg-blue-500/15 blur-3xl"
+        />
+        <div className="relative z-10">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-violet-300">
+              <Sparkles size={17} aria-hidden="true" />
+              INTENTRA AI STUDIO
+            </p>
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300">
+              <ShieldCheck size={14} aria-hidden="true" />
+              Human-governed
+            </span>
+          </div>
+
+          <h1 className="mt-5 max-w-3xl text-3xl font-semibold leading-tight tracking-[-0.045em] text-white sm:text-4xl lg:text-5xl">
+            From purchase intent to
+            <span className="block text-violet-300">
+              confident decisions.
+            </span>
+          </h1>
+
+          <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+            Describe what you need. INTENTRA structures your request,
+            evaluates spending policy, and keeps authorization in your hands.
+          </p>
+
+          <ol
+            aria-label="Purchasing workflow"
+            className="mt-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
+          >
+            {[
+              ["01", "Describe"],
+              ["02", "Evaluate"],
+              ["03", "Review"],
+              ["04", "Authorize separately"],
+            ].map(([number, label]) => (
+              <li
+                key={number}
+                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm"
+              >
+                <span className="text-xs font-bold text-violet-300">
+                  {number}
+                </span>
+                <span className="text-xs font-semibold text-slate-100">
+                  {label}
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <p className="mt-5 text-xs leading-5 text-slate-400">
+            Creating a proposal does not reserve funds, authorize a
+            purchase, or initiate PayPal checkout.
+          </p>
+        </div>
+      </section>
       <section aria-labelledby="request-heading" className="app-card overflow-hidden rounded-3xl border border-border bg-surface">
         <div className="grid lg:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="min-w-0 p-5 sm:p-7">
@@ -191,13 +255,13 @@ export function AgentWorkspace() {
             <h2 id="request-heading" className="mt-3 text-2xl font-semibold tracking-[-.035em]">Start with the business need.</h2>
             <p className="mt-2 text-sm leading-6 text-muted">Describe what you need. AI extracts the details; INTENTRA evaluates them against deterministic policy.</p>
             {!loading && !authenticated && <div className="mt-5 rounded-xl border border-border bg-surface-muted p-4 text-sm"><Link href="/account" className="font-semibold text-accent underline">Sign in to your account</Link><p className="mt-1 text-muted">Your proposals and contracts are visible only to you.</p></div>}
-            <form onSubmit={submit} className="mt-6 space-y-4" aria-busy={generating}>
+            <form onSubmit={submit} className="mt-7 space-y-5" aria-busy={generating}>
               <div className="flex items-baseline justify-between gap-3"><label className="text-sm font-semibold" htmlFor="purchase-request">Purchase request</label><span id="request-count" className="text-xs tabular-nums text-muted">{requestText.length.toLocaleString()} / 4,000</span></div>
-              <textarea id="purchase-request" value={requestText} onChange={(event) => setRequestText(event.target.value)} maxLength={4000} required rows={5} disabled={busy} aria-describedby="request-count request-help" placeholder="What do you need? Include a purpose, merchant, amount and currency if known." className="w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm leading-6 shadow-sm disabled:opacity-60" />
-              <div className="flex flex-wrap gap-2" aria-label="Synthetic example prompts">{examples.map((example) => <button key={example.label} type="button" disabled={busy} onClick={() => setRequestText(example.text)} className="rounded-lg border border-border px-3 py-2 text-xs text-muted hover:bg-surface-muted disabled:opacity-50">{example.label}</button>)}</div>
+              <textarea id="purchase-request" value={requestText} onChange={(event) => setRequestText(event.target.value)} maxLength={4000} required rows={5} disabled={busy} aria-describedby="request-count request-help" placeholder="What do you need? Include a purpose, merchant, amount and currency if known." className="min-h-44 w-full resize-y rounded-2xl border border-border bg-background px-5 py-5 text-base leading-7 shadow-sm outline-none transition-all duration-200 placeholder:text-muted focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 disabled:opacity-60" />
+              <div className="flex flex-wrap gap-2" aria-label="Synthetic example prompts">{examples.map((example) => <button key={example.label} type="button" disabled={busy} onClick={() => setRequestText(example.text)} className="rounded-full border border-border bg-surface-muted/60 px-4 py-2.5 text-xs font-medium text-foreground transition-colors hover:border-violet-400/50 hover:bg-violet-500/10 disabled:opacity-50">{example.label}</button>)}</div>
               <div><label className="mb-2 block text-sm font-semibold" htmlFor="contract-select">Apply approved contract <span className="font-normal text-muted">(optional)</span></label><select id="contract-select" value={contractId} onChange={(event) => setContractId(event.target.value)} disabled={busy} aria-describedby="contract-help" className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm disabled:opacity-60"><option value="">No contract selected</option>{eligibleContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.merchant_id} · limit {contract.currency} {contract.maximum_amount}</option>)}</select><p id="contract-help" className="mt-2 text-xs leading-5 text-muted">Without an approved contract, the result will need more information before it can be confirmed.</p>{contractError && <p className="mt-2 text-xs text-muted">{contractError}</p>}</div>
               <p id="request-help" className="text-xs leading-5 text-muted">Your request is sent to the configured AI provider. Include only relevant purchase details; leave out passwords, payment credentials and unrelated personal information.</p>
-              <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4"><button type="submit" disabled={busy || loading || !authenticated || !!uncertainKey} className="rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground shadow-lg shadow-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50">{generating ? "Creating proposal…" : "Create proposal"}</button>{generating && <button type="button" onClick={stopWaiting} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold">Stop waiting</button>}<span className="text-xs text-muted">Creates a saved proposal and policy evaluation.</span></div>
+              <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4"><button type="submit" disabled={busy || loading || !authenticated || !!uncertainKey} className="inline-flex min-h-12 items-center justify-center rounded-xl bg-accent px-7 py-3 text-sm font-semibold text-accent-foreground shadow-lg shadow-violet-500/20 transition-all hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50">{generating ? "Creating proposal…" : "Create proposal"}</button>{generating && <button type="button" onClick={stopWaiting} className="rounded-xl border border-border px-4 py-3 text-sm font-semibold">Stop waiting</button>}<span className="text-xs text-muted">Creates a saved proposal and policy evaluation.</span></div>
               {generating && <div className="rounded-xl bg-surface-muted p-4"><p role="status" className="flex items-center gap-2 text-sm"><Clock3 size={16} aria-hidden="true" />Waiting for the AI response… <span className="tabular-nums">{elapsed}s</span></p><p className="mt-2 text-xs leading-5 text-muted">Local models can take a few minutes. Stopping only ends this browser wait; it does not guarantee the server stopped or that nothing was saved.</p></div>}
             </form>
           </div>

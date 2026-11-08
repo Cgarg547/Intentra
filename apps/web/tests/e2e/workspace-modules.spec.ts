@@ -50,11 +50,11 @@ test("approval center records explicit owner rejection reason", async ({ page })
   await page.goto("/approvals");
   await expect(page.getByRole("heading", { name: "Approval Center" })).toBeVisible();
   await expect(page.getByText("Simulated extraction")).toBeVisible();
-  await page.getByLabel("Rejection reason (required to reject)").fill("No longer needed");
+  await page.getByRole("textbox", { name: "Rejection reason" }).fill("No longer needed");
   await page.getByRole("button", { name: "Reject" }).click();
   await expect(page.getByText("Proposal rejected and recorded in its audit history.")).toBeVisible();
   await page.getByRole("button", { name: "Decision history" }).click();
-  await page.getByText(/Decision history \(\d+\)/).click();
+  await page.getByRole("button", { name: /Decision audit history \(\d+\)/ }).click();
   await expect(page.getByText("Reason: No longer needed")).toBeVisible();
 });
 
@@ -74,17 +74,23 @@ test("audit, security, merchant and status screens show live API response data",
   await page.goto("/audit");
   await expect(page.getByText("CAPTURE_COMPLETED")).toBeVisible();
   await page.getByRole("button", { name: /CAPTURE_COMPLETED/ }).click();
-  await expect(page.getByText('"amount": "1.00"')).toBeVisible();
+  await page.getByRole("button", { name: "Technical event data" }).click();
+  await expect(page.getByText('"amount": "1.00"', { exact: false })).toBeVisible();
   await page.goto("/security");
   await expect(page.getByText("Current session")).toBeVisible();
   await expect(page.getByText("Valid")).toBeVisible();
   await page.goto("/merchants");
   await expect(page.getByText("paypal_merchant_demo").first()).toBeVisible();
-  await expect(page.getByText("Mapping configured; not reverified here")).toBeVisible();
+  await expect(
+    page.getByRole("row", { name: /paypal_merchant_demo/ })
+      .getByRole("cell", { name: "Not reverified here" })
+  ).toBeVisible();
   await page.goto("/status");
-  await expect(page.getByText("credentials configured")).toBeVisible();
-  await expect(page.getByText("Unavailable — not reported")).toHaveCount(3);
-  await expect(page.getByText(/does not verify provider availability/)).toBeVisible();
+  const health = page.getByRole("region", { name: "System health overview" });
+  await expect(health.getByText("Available", { exact: true })).toHaveCount(2);
+  await expect(health.getByText("Configured", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("AI Simulation Mode")).toBeVisible();
+  await expect(page.getByText(/Configured PayPal credentials do not verify PayPal/)).toBeVisible();
 });
 
 test("audit filters clear details for an event outside the current results", async ({ page }) => {
@@ -105,13 +111,14 @@ test("audit filters clear details for an event outside the current results", asy
 
   await page.goto("/audit");
   await page.getByRole("button", { name: "FIRST_EVENT" }).click();
-  await expect(page.getByText('"marker": "first"')).toBeVisible();
+  await page.getByRole("button", { name: "Technical event data" }).click();
+  await expect(page.getByText('"marker": "first"', { exact: false })).toBeVisible();
   await page.getByRole("textbox", {
     name: "Event type",
     exact: true,
   }).fill("SECOND_EVENT");
   await expect(page.getByRole("button", { name: "SECOND_EVENT" })).toBeVisible();
-  await expect(page.getByText("Select an event to inspect its recorded evidence.")).toBeVisible();
+  await expect(page.getByText(/Select an event from the timeline to inspect its recorded metadata/)).toBeVisible();
   await expect(page.getByText('"marker": "first"')).toHaveCount(0);
 });
 
@@ -119,9 +126,9 @@ test("analytics searches real owner transaction rows and remains mobile sized", 
   await mockModules(page);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/analytics");
-  await expect(page.getByText("Successful attempts")).toBeVisible();
-  await expect(page.getByText("attempt-1")).toBeVisible();
+  await expect(page.getByText("Successful payments", { exact: true })).toBeVisible();
+  await expect(page.locator('[title="attempt-1"]')).toBeVisible();
   await page.getByLabel("Search payment history").fill("not-present");
-  await expect(page.getByText("No stored payments match these filters.")).toBeVisible();
+  await expect(page.getByText("No matching transactions")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

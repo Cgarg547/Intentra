@@ -83,16 +83,16 @@ export function AuthPanel() {
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-surface p-6">
-      <h2 className="text-xl font-semibold text-foreground">
+    <section className="rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-7">
+      <h2 className="text-xl font-semibold tracking-tight text-foreground">
         Secure account access
       </h2>
 
       {loading ? (
         <p className="mt-4 text-sm text-muted">Checking session...</p>
       ) : user ? (
-        <div className="mt-5 space-y-4">
-          <p className="text-sm text-muted">
+        <div className="mt-6 space-y-5">
+          <p className="rounded-xl border border-border bg-background p-4 text-sm text-muted">
             Signed in as{" "}
             <strong className="text-foreground">{user.email}</strong>
           </p>
@@ -100,14 +100,14 @@ export function AuthPanel() {
             type="button"
             onClick={signOut}
             disabled={submitting}
-            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground disabled:opacity-50"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? "Signing out..." : "Sign out"}
           </button>
         </div>
       ) : (
-        <form onSubmit={submit} className="mt-5 space-y-4">
-          <div className="flex gap-2">
+        <form onSubmit={submit} className="mt-6 space-y-5">
+          <div className="flex w-full gap-1 rounded-xl border border-border bg-background p-1">
             {(["login", "register"] as const).map((value) => (
               <button
                 key={value}
@@ -117,10 +117,10 @@ export function AuthPanel() {
                   setError(null);
                 }}
                 aria-pressed={mode === value}
-                className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                   mode === value
-                    ? "bg-accent text-accent-foreground"
-                    : "border border-border text-foreground"
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted hover:bg-surface hover:text-foreground"
                 }`}
               >
                 {value === "login" ? "Sign in" : "Create account"}
@@ -136,7 +136,7 @@ export function AuthPanel() {
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-4 py-3"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground transition-colors hover:border-accent/50 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
             />
           </label>
 
@@ -152,14 +152,14 @@ export function AuthPanel() {
               required
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-4 py-3"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground transition-colors hover:border-accent/50 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/20"
             />
           </label>
 
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-xl bg-accent px-5 py-3 text-sm font-semibold text-accent-foreground disabled:opacity-50"
+            className="w-full rounded-xl bg-accent px-5 py-3.5 text-sm font-semibold text-accent-foreground transition-all duration-200 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting
               ? "Please wait..."

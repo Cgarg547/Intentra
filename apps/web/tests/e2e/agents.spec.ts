@@ -39,11 +39,11 @@ test("agent workspace creates, reviews and confirms a simulated plan without pay
   await expect(page.getByText("Allowed by current policy")).toBeVisible();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Confirm proposal" }).click();
-  await expect(page.getByText("Owner confirmed this plan. Payment has not been reserved or initiated.")).toBeVisible();
+  await expect(page.getByText("Proposal confirmed. Payment has not been reserved or initiated.")).toBeVisible();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Prepare payment" }).click();
   await expect(page.getByText("Payment prepared", { exact: true })).toBeVisible();
-  await expect(page.getByText(/INTENTRA has not confirmed a PayPal order or buyer approval/)).toBeVisible();
+  await expect(page.getByText(/Buyer approval and verified capture are separate/)).toBeVisible();
   await expect(page.getByText("No PayPal order has been created.", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Continue to checkout" })).toBeVisible();
   expect(paymentPosts).toEqual([]);

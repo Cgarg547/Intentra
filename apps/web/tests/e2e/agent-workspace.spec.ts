@@ -77,6 +77,7 @@ test("201 maps proposal_id, renders OLLAMA NEEDS_INFORMATION, and permits no con
   await expect(page.getByText("No proposals yet.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Create proposal", exact: true }).click();
   const card = page.getByRole("article", { name: `Proposal ${proposalId}`, exact: true });
+  await card.getByText("Request and technical details", { exact: true }).click();
   await expect(card.locator("dd").filter({ hasText: proposalId })).toBeVisible();
   await expect(card.getByText("OLLAMA", { exact: true })).toBeVisible();
   await expect(card.getByText("Needs information", { exact: true })).toHaveCount(2);
@@ -230,6 +231,7 @@ test("history shows real states, draft is not labeled evaluated, refresh is read
 test("saved detail route loads proposal_id through GET only", async ({ page, api }) => {
   await page.goto(`/agents/${proposalId}`);
   await expect(page.getByRole("heading", { name: "Proposal details" })).toBeVisible();
+  await page.getByText("Request and technical details", { exact: true }).click();
   await expect(page.getByText(proposalId, { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Confirm proposal" })).toHaveCount(0);
   // Development Strict Mode may repeat the initial read effect; refresh adds one GET.

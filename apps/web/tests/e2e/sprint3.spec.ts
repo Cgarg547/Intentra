@@ -155,7 +155,7 @@ test("evaluates, reserves, redirects through mocked PayPal and verifies return b
   await page.getByLabel("Approved intent contract").selectOption(contractId);
   await page.getByLabel(/Payment amount/).fill("24.50");
   await page.getByRole("button", { name: "Evaluate payment" }).click();
-  await expect(page.getByText("Authorization: ALLOW")).toBeVisible();
+  await expect(page.getByText("Policy decision: ALLOW")).toBeVisible();
   await page.getByRole("button", { name: "Reserve budget" }).click();
   await page.getByRole("button", { name: "Continue to PayPal Sandbox" }).click();
   await expect(page).toHaveURL(/paypal\.com/);
@@ -168,7 +168,7 @@ test("evaluates, reserves, redirects through mocked PayPal and verifies return b
   expect(callbackEvidence).toEqual({ observed: true, cookieObserved: true });
   mock.setApprovedReturn();
   await page.goto("/payments");
-  await page.getByRole("button", { name: "Details" }).click();
+  await page.getByRole("button", { name: "View" }).click();
   await expect(page.locator("dt").filter({ hasText: "Buyer approval" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Capture payment" })).toBeVisible();
   await expect(page.getByText("APPROVED", { exact: true }).first()).toBeVisible();
@@ -182,7 +182,7 @@ test("evaluates, reserves, redirects through mocked PayPal and verifies return b
 test("uncertain capture outcomes require reconciliation", async ({ page }) => {
   const mock = await mockWorkspace(page, { attemptState: "PENDING", approvalState: "APPROVED" });
   await page.goto("/payments");
-  await page.getByRole("button", { name: "Details" }).click();
+  await page.getByRole("button", { name: "View" }).click();
   mock.setCaptureMode("UNKNOWN");
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Capture payment" }).click();
@@ -239,7 +239,7 @@ test("expired pending approval does not offer resume", async ({ page }) => {
 test("definitively failed capture is shown as failed", async ({ page }) => {
   const mock = await mockWorkspace(page, { attemptState: "PENDING", approvalState: "APPROVED" });
   await page.goto("/payments");
-  await page.getByRole("button", { name: "Details" }).click();
+  await page.getByRole("button", { name: "View" }).click();
   mock.setCaptureMode("FAILED");
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Capture payment" }).click();
@@ -258,7 +258,7 @@ test("API authorization failures are not shown as empty account data", async ({ 
   await page.goto("/payments");
   await expect(page.getByRole("alert").filter({ hasText: "API is unavailable or protected" })).toBeVisible();
   await expect(page.getByText("No approved contracts are available.")).toHaveCount(0);
-  await expect(page.getByText("No payment attempts have been created.")).toHaveCount(0);
+  await expect(page.getByText("No payment activity yet")).toHaveCount(0);
 });
 
 test("payment workspace stays within a mobile viewport", async ({ page }) => {

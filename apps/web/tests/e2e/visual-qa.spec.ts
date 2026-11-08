@@ -12,7 +12,7 @@ test("captures mock-only responsive Command Center and AI Assistant", async ({ p
   for (const width of [375, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Control every purchase decision." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Intelligent spending. Human control." })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.screenshot({ path: `/tmp/intentra-b2-overview-${width}.png`, fullPage: true, animations: "disabled" });
     await page.goto("/agents");

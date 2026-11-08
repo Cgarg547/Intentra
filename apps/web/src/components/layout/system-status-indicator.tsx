@@ -16,7 +16,7 @@ function stateFor(status: SystemStatus): IndicatorState {
 
 const presentation: Record<IndicatorState, { label: string; dot: string; title: string }> = {
   checking: { label: "Checking status", dot: "bg-slate-400", title: "Checking authenticated API and database status" },
-  ready: { label: "System ready", dot: "bg-emerald-500", title: "Authenticated API and database status are available" },
+  ready: { label: "API & DB available", dot: "bg-emerald-500", title: "Authenticated API and database status are available" },
   attention: { label: "Needs attention", dot: "bg-amber-500", title: "The API or database did not report available status" },
   unavailable: { label: "Status unavailable", dot: "bg-red-500", title: "System status could not be loaded" },
 };
